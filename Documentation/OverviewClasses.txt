@@ -1,0 +1,32 @@
+class hardware: Fabian
+-LCD Dispaly -> level, score, highscore
+-2x 8x8 LED Matrix  -> game field
+-Inputpanel -> input arrows, on/off, reset
+updateLCD()
+updateLED(array[][] field)
+reset()
+on_off()
+readInputs()
+
+
+
+
+class dynamic:
+getBlock()
+writeBlock()
+deleteBlock()
+increment()
+movements()
+
+
+
+
+
+
+
+class static:
+detectCollision()
+checkRowIsFull()
+moveRowDown()
+deleteRow()
+isGameOver()
