@@ -8,10 +8,20 @@
 #include "LedControl.h"
 #include "binary.h"
 #include "Keypad.h"
-
+#include "LiquidCrystal.h"
 
 //Keypad
 
+// init display
+/*
+RS connected to 12
+E connected to 11
+D4 connected to 2 
+D5 connected to 3
+D6 connected to 4
+D7 connected to 5
+*/
+LiquidCrystal lcd(12, 11, 2, 3, 4, 5);
 
 const int keypadRows = 4;
 const int keypadCols = 4;
@@ -58,6 +68,7 @@ int ledRow = 0;
 int ledCol = 0;
 
 void setup() {
+/*  
   lc.shutdown(0, false);
   lc.shutdown(1, false);
   // Set brightness to a low value
@@ -66,6 +77,11 @@ void setup() {
   // Clear the display
   lc.clearDisplay(0);
   lc.clearDisplay(1);
+*/
+    // Initialisiere das LCD mit 16x2 Zeichen
+  lcd.begin(16, 2);
+  // Schreibe eine Begrüßungsnachricht
+  lcd.print("Hello, Arduino!");
 }
 
 
