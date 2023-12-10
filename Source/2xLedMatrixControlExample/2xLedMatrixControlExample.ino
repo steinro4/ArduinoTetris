@@ -10,9 +10,14 @@
 #include "Keypad.h"
 #include "LiquidCrystal.h"
 
-//Keypad
+/*
+----------
+DISPLAY
+----------
+*/
+int level = 1;
+int points = 0;
 
-// init display
 /*
 RS connected to 12
 E connected to 11
@@ -25,6 +30,12 @@ LiquidCrystal lcd(12, 11, 2, 3, 4, 5);
 
 const int keypadRows = 4;
 const int keypadCols = 4;
+
+/*
+----------
+KEYPAD
+----------
+*/
 //init keypad
 char keys[keypadRows][keypadCols] = {
   {'1','2','3','A'},
@@ -34,8 +45,8 @@ char keys[keypadRows][keypadCols] = {
 };
 
 // pins for rows/cols on the Arduino
-byte rowPins[keypadRows] = {9, 8, 7, 6}; 
-byte colPins[keypadCols] = {5, 4, 3, 2};
+byte rowPins[keypadRows] = {53, 51, 49, 47}; 
+byte colPins[keypadCols] = {45, 43, 41, 39};
 
 // Assign hardware buttons
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, keypadRows, keypadCols);
@@ -47,14 +58,18 @@ LedControl lc = LedControl(12, 11, 10, 2);
  CLK connects to pin 11
  CS connects to pin 10 
 */
-
-
 // delay time
 unsigned long delaytime = 1000;
 
 const int numRows = 8;
 const int numCols = 8;
 
+
+/*
+----------
+FIELD
+----------
+*/
 bool field[numRows][numCols] = {false};
 
 /*
@@ -67,6 +82,11 @@ int j = 0;
 int ledRow = 0;
 int ledCol = 0;
 
+/*
+----------
+SETUP
+----------
+*/
 void setup() {
 /*  
   lc.shutdown(0, false);
@@ -80,12 +100,28 @@ void setup() {
 */
     // Initialisiere das LCD mit 16x2 Zeichen
   lcd.begin(16, 2);
-  // Schreibe eine Begrüßungsnachricht
-  lcd.print("Hello, Arduino!");
+
 }
 
-
+/*
+----------
+LOOP
+----------
+*/
 void loop() {
+
+  // Example for Display update add points and level after 2 seconds.
+  level++;
+  points += 10;
+
+  // update the display
+  updateDisplay();
+
+  delay(2000);
+  // clear the display for the next update
+  lcd.clear();
+
+
 
   char key = keypad.getKey();
 
@@ -98,7 +134,11 @@ void loop() {
   }
 }
 
-  
+/*
+----------
+MOVE LED
+----------
+*/  
 //move the LED by pressing buttons (2:up, 4:left, 6:right, 8:down)
 void moveLED(char direction) {
   switch (direction) {
@@ -137,7 +177,13 @@ void resetLED() {
   updateLED();
 }
 
-//update Led Position
+
+
+/*
+----------
+UPDATE LED
+----------
+*/
 void updateLED() {
   // Schalte alle LEDs aus
   lc.clearDisplay(0);
@@ -156,3 +202,22 @@ void updateLED() {
   lc.clearDisplay(1);
 
 }
+
+
+/*
+----------
+UpdateDisplay
+----------
+*/
+void updateDisplay() {
+  // Setze den Cursor auf die erste Zeile und schreibe das Level
+  lcd.setCursor(0, 0);
+  lcd.print("Level: ");
+  lcd.print(level);
+
+  // Setze den Cursor auf die zweite Zeile und schreibe die Punkte
+  lcd.setCursor(0, 1);
+  lcd.print("Points: ");
+  lcd.print(points);
+}
+
