@@ -9,12 +9,12 @@
 */
 LedControl lc = LedControl(12, 11, 10, 2);
 
-const int numRows = 8;
-const int numCols = 16;
+const int numRows = 16;
+const int numCols = 8;
 
 
 // create playfield (addr, row, col)
-bool field[numRows][numCols] = { {  } };
+bool field[numCols][numRows] = { {} };
 
 // init actual shape
 int currentShape[4][4] = { { 0 } };
@@ -113,11 +113,12 @@ void setShape(int shape) {
   }
 }
 
-void setLeds(bool field[numRows][numCols]) {
+void setLeds(bool field[numCols][numRows]) {
   int addr = 0;
   int k = 0;
-  for (int i = 0; i < numRows; i++) {
-    for (int j = 0; j < numCols; j++) {
+
+  for (int i = 0; i < numCols; i++) {
+    for (int j = 0; j < numRows; j++) {
       if (j > 7) {
         k = j - 8;
         addr = 1;
@@ -132,8 +133,9 @@ void setLeds(bool field[numRows][numCols]) {
 
 
 void loop() {
-
-  field[0][0] = true;  //first led 1st matrix
-  field[0][8] = true;  //first led 2nd matrix
+  field[0][0] = true;   //first led 1st matrix
+  field[7][7] = true;   //last led 1st matrix
+  field[0][8] = true;   //first led 2nd matrix
+  field[7][15] = true;  //last led 2st matrix
   setLeds(field);
 }
