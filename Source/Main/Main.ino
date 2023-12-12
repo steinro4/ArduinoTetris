@@ -1,9 +1,3 @@
-/*
- Created by Rui Santos
- 
- All the resources for this project:
- http://randomnerdtutorials.com/
-*/
 
 #include "LedControl.h"
 #include "binary.h"
@@ -15,33 +9,16 @@
 */
 LedControl lc = LedControl(12, 11, 10, 2);
 
-// delay time
-unsigned long delaytime = 1000;
-
-
-const int numRows = 8;
-const int numCols = 16;
+const int numRows = 16;
+const int numCols = 8;
 
 
 // create playfield (addr, row, col)
-bool field[numRows][numCols] = {{false}};
+bool field[numCols][numRows] = { {} };
 
 // init actual shape
-int currentShape[4][4] = {{0}};
+int currentShape[4][4] = { { 0 } };
 
-// init actual row/col
-int currentRow = 0;
-int currentCol = 0;
-
-// activate/deactivate row LEDs
-/*
-byte high = B11111111;
-byte low = B00000000;
-*/
-
-// count variables
-int i = 0;
-int j = 0;
 
 void setup() {
   lc.shutdown(0, false);
@@ -52,17 +29,9 @@ void setup() {
   // Clear the display
   lc.clearDisplay(0);
   lc.clearDisplay(1);
+  //start monitor
+  Serial.begin(9600);
 }
-
-/*
-void setRowHigh(int addr, int row) {
-  lc.setRow(addr, row, high);
-}
-
-void setRowLow(int addr, int row) {
-  lc.setRow(addr, row, low);
-}
-*/
 
 void setShape(int shape) {
   // Define different shapes
@@ -75,7 +44,7 @@ void setShape(int shape) {
       currentShape[0][3] = 1;
       break;
     case 1:
-    /*{1, 0, 0, 0}
+      /*{1, 0, 0, 0}
       {1, 1, 1, 0}
       {0, 0, 0, 0}
       {0, 0, 0, 0}*/
@@ -84,9 +53,9 @@ void setShape(int shape) {
       currentShape[1][1] = 1;
       currentShape[1][2] = 1;
       break;
-    
+
     case 2:
-    /*{1, 1, 1, 0}
+      /*{1, 1, 1, 0}
       {1, 0, 0, 0}
       {0, 0, 0, 0}
       {0, 0, 0, 0}*/
@@ -98,7 +67,7 @@ void setShape(int shape) {
 
 
     case 3:
-    /*{0, 1, 1, 0},
+      /*{0, 1, 1, 0},
       {0, 1, 1, 0},
       {0, 0, 0, 0},
       {0, 0, 0, 0}*/
@@ -109,7 +78,7 @@ void setShape(int shape) {
       break;
 
     case 4:
-    /*{0, 1, 1, 0},
+      /*{0, 1, 1, 0},
       {1, 1, 0, 0},
       {0, 0, 0, 0},
       {0, 0, 0, 0}*/
@@ -120,7 +89,7 @@ void setShape(int shape) {
       break;
 
     case 5:
-    /*{1, 1, 0, 0},
+      /*{1, 1, 0, 0},
       {0, 1, 1, 0},
       {0, 0, 0, 0},
       {0, 0, 0, 0}*/
@@ -131,7 +100,7 @@ void setShape(int shape) {
       break;
 
     case 6:
-    /*{1, 1, 1, 0},
+      /*{1, 1, 1, 0},
       {0, 1, 0, 0},
       {0, 0, 0, 0},
       {0, 0, 0, 0}*/
@@ -140,49 +109,33 @@ void setShape(int shape) {
       currentShape[0][2] = 1;
       currentShape[1][1] = 1;
       break;
-    // Füge hier die Definitionen für die anderen Formen hinzu
+      // Füge hier die Definitionen für die anderen Formen hinzu
   }
 }
 
-void loop() {
+void setLeds(bool field[numCols][numRows]) {
+  int addr = 0;
+  int k = 0;
 
-  lc.setLed(0, i, j, true);  // Turn on LED at position (i, j) on matrix 0
-  delay(1000);               // Delay for 1 second
-  lc.setLed(0, i, j, false); // Turn off LED at position (i, j) on matrix 0
-
-int randomShape = random(7);
-setShape(randomShape);
-
-
-
-// single led move row down/ col down
-  // Move to the next LED position
-  i++;
-  if (i >= 8) {
-    i = 0;
-    j++;
-    if (j >= 8) {
-      j = 0;
+  for (int i = 0; i < numCols; i++) {
+    for (int j = 0; j < numRows; j++) {
+      if (j > 7) {
+        k = j - 8;
+        addr = 1;
+      } else {
+        k = j;
+        addr = 0;
+      }
+      lc.setLed(addr, i, k, field[i][j]);
     }
   }
+}
 
 
-
-
-/*
-
-// complete row movement
-  setRowHigh(j,i);
-  delay(1000);
-  setRowLow(j,i);
-  i = i + 1;
-  if (i >= 8 & j < 1) {
-    i = 0;
-    j = 1;
-  }
-  else if (i >= 8 & j > 0){
-    i = 0;
-    j = 0;
-  }
-  */
+void loop() {
+  field[0][0] = true;   //first led 1st matrix
+  field[7][7] = true;   //last led 1st matrix
+  field[0][8] = true;   //first led 2nd matrix
+  field[7][15] = true;  //last led 2st matrix
+  setLeds(field);
 }
