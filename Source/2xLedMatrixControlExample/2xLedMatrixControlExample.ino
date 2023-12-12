@@ -1,9 +1,4 @@
-/*
- Created by Rui Santos
- 
- All the resources for this project:
- http://randomnerdtutorials.com/
-*/
+
 //load libraries
 #include "LedControl.h"
 #include "binary.h"
@@ -26,7 +21,7 @@ D5 connected to 3
 D6 connected to 4
 D7 connected to 5
 */
-LiquidCrystal lcd(12, 11, 2, 3, 4, 5);
+LiquidCrystal lcd(7, 6, 2, 3, 4, 5);
 
 const int keypadRows = 4;
 const int keypadCols = 4;
