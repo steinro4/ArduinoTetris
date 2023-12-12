@@ -144,22 +144,22 @@ void setShape(int shape) {
   }
 }
 
-void loop() {
-
-  lc.setLed(0, i, j, true);  // Turn on LED at position (i, j) on matrix 0
-  delay(1000);               // Delay for 1 second
-  lc.setLed(0, i, j, false); // Turn off LED at position (i, j) on matrix 0
-
-int randomShape = random(7);
-setShape(randomShape);
-
-
-
-// single led move row down/ col down
-  // Move to the next LED position
-  i++;
-  if (i >= 8) {
-    i = 0;
+void setLeds(bool field[numRows][numCols]) {
+  int addr = 0;
+  int k = 0;
+  for (int i = 0; i < numRows; i++) {
+    for (int j = 0; j < numCols; j++) {
+      if (j > 7) {
+        k = j - 8;
+        addr = 1;
+      } else {
+        k = j;
+        addr = 0;
+      }
+      lc.setLed(addr, i, k, field[i][j]);
+    }
+  }
+}
     j++;
     if (j >= 8) {
       j = 0;
