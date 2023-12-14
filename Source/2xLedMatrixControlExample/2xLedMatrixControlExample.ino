@@ -94,43 +94,20 @@ LOOP
 */
 void loop() {
 
+  if (level < 10 and level > 0){ // condition for the Game -> has to be changed.
+  gameRunning();
+  }
+  
+  else if(level <= 0){ // condition to win the Game
+    lcd.clear();
+    gameWon();
+  }
 
+  else { //condition for GAMEOVER
+    lcd.clear();
+    gameOver();
+  }
 
-  //read the value of the X- and Y-Axis
-  int xValue = analogRead(xAxis);
-  int yValue = analogRead(yAxis);
-  int buttonState = digitalRead(buttonPin);
-/*
-----------
-JOYSTICK MOVEMENT
-----------
-*/
-  // Joystick "left"
-  if (xValue < (512 - threshold)) {
-    level --;
-  // Joystick "right"
-    } else if (xValue > (512 + threshold)) {
-      level ++;
-    }
-  // Joystick "up"
-  if (yValue < (512 - threshold)) {
-    points ++;
-  // Joystick "down"
-    } else if (yValue > (512 + threshold)) {
-      points --;
-    }
-  // Joystick tilt
-  if (buttonState == LOW){
-    highscore ++;
-    }
-
-
-
-  // update the LCD display
-  updateDisplay();
-  delay(100);
-  // clear the LCD display for the next update
-  lcd.clear();
 }
 
 //reset option (button #)
@@ -162,8 +139,68 @@ void updateLED() {
   lc.clearDisplay(1);
 
 }
+/*
+----------
+GAMERUNNING
+----------
+*/
+void gameRunning(){
+   // Joystick "left"
 
+  //read the value of the X- and Y-Axis
+  int xValue = analogRead(xAxis);
+  int yValue = analogRead(yAxis);
+  int buttonState = digitalRead(buttonPin);
 
+    if (xValue < (512 - threshold)) {
+      level --;
+    // Joystick "right"
+      } else if (xValue > (512 + threshold)) {
+        level ++;
+      }
+    // Joystick "up"
+    if (yValue < (512 - threshold)) {
+      points ++;
+    // Joystick "down"
+      } else if (yValue > (512 + threshold)) {
+        points --;
+      }
+    // Joystick tilt
+    if (buttonState == LOW){
+      highscore ++;
+      }
+      
+    // update the LCD display
+    updateDisplay();
+    delay(100);
+    // clear the LCD display for the next update
+    lcd.clear();
+
+}
+/*
+----------
+GAMEOVER
+----------
+*/
+void gameOver(){
+
+  lcd.setCursor(6, 0);
+  lcd.print("GAME");
+  lcd.setCursor(6, 1);
+  lcd.print("OVER");
+}
+/*
+----------
+GAMEWON
+----------
+*/
+void gameWon(){
+
+  lcd.setCursor(6, 0);
+  lcd.print("GAME");
+  lcd.setCursor(6, 1);
+  lcd.print("WON");
+}
 /*
 ----------
 UpdateDisplay
@@ -186,4 +223,5 @@ void updateDisplay() {
   lcd.print("HS:");
   lcd.print(highscore);
 }
+
 
