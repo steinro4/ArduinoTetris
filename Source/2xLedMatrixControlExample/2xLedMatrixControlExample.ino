@@ -4,55 +4,37 @@
 #include "binary.h"
 #include "Keypad.h"
 #include "LiquidCrystal.h"
+#include "Joystick.h"
 
 /*
 ----------
-DISPLAY
+DISPLAY init
 ----------
 */
 int level = 1;
 int points = 0;
-
+int highscore = 0;
 /*
-RS connected to 12
-E connected to 11
+RS connected to 7
+E connected to 6
 D4 connected to 2 
 D5 connected to 3
 D6 connected to 4
 D7 connected to 5
 */
 LiquidCrystal lcd(7, 6, 2, 3, 4, 5);
-
-const int keypadRows = 4;
-const int keypadCols = 4;
-
 /*
 ----------
-KEYPAD
+LED Control Init
 ----------
 */
-//init keypad
-char keys[keypadRows][keypadCols] = {
-  {'1','2','3','A'},
-  {'4','5','6','B'},
-  {'7','8','9','C'},
-  {'*','0','#','D'}
-};
-
-// pins for rows/cols on the Arduino
-byte rowPins[keypadRows] = {53, 51, 49, 47}; 
-byte colPins[keypadCols] = {45, 43, 41, 39};
-
-// Assign hardware buttons
-Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, keypadRows, keypadCols);
-
-LedControl lc = LedControl(12, 11, 10, 2);
-
 /*
  DIN connects to pin 12
  CLK connects to pin 11
  CS connects to pin 10 
 */
+LedControl lc = LedControl(12, 11, 10, 2);
+
 // delay time
 unsigned long delaytime = 1000;
 
@@ -62,17 +44,20 @@ const int numCols = 8;
 
 /*
 ----------
-FIELD
+JOYSTICK init
+----------
+*/
+const int xAxis = A1;       // Analog input for the X-Axis
+const int yAxis = A2;       // Analog input for the Y-Axis
+const int buttonPin = 8;    //Digital input for the Joystick
+const int threshold = 100;  // Threshold for the movement in a direction, can be modified
+/*
+----------
+FIELD init
 ----------
 */
 bool field[numRows][numCols] = {false};
 
-/*
-byte high = B11111111;
-byte low = B00000000;
-int i = 0;
-int j = 0;
-*/
 
 int ledRow = 0;
 int ledCol = 0;
@@ -83,6 +68,10 @@ SETUP
 ----------
 */
 void setup() {
+
+  Serial.begin(9600);
+  pinMode(buttonPin, INPUT_PULLUP); // Setze den Button-Pin als Eingang mit Pull-Up-Widerstand
+
 /*  
   lc.shutdown(0, false);
   lc.shutdown(1, false);
@@ -105,64 +94,43 @@ LOOP
 */
 void loop() {
 
-  // Example for Display update add points and level after 2 seconds.
-  level++;
-  points += 10;
-
-  // update the display
-  updateDisplay();
-
-  delay(2000);
-  // clear the display for the next update
-  lcd.clear();
 
 
-
-  char key = keypad.getKey();
-
-  if (key) {
-    if (key == '#') {
-      resetLED();
-    } else {
-      moveLED(key);
-    }
-  }
-}
-
+  //read the value of the X- and Y-Axis
+  int xValue = analogRead(xAxis);
+  int yValue = analogRead(yAxis);
+  int buttonState = digitalRead(buttonPin);
 /*
 ----------
-MOVE LED
+JOYSTICK MOVEMENT
 ----------
-*/  
-//move the LED by pressing buttons (2:up, 4:left, 6:right, 8:down)
-void moveLED(char direction) {
-  switch (direction) {
-    case '2': // Unten
-      if (ledRow < numRows - 1) {
-        ledRow++;
-      }
-      break;
+*/
+  // Joystick "left"
+  if (xValue < (512 - threshold)) {
+    level --;
+  // Joystick "right"
+    } else if (xValue > (512 + threshold)) {
+      level ++;
+    }
+  // Joystick "up"
+  if (yValue < (512 - threshold)) {
+    points ++;
+  // Joystick "down"
+    } else if (yValue > (512 + threshold)) {
+      points --;
+    }
+  // Joystick tilt
+  if (buttonState == LOW){
+    highscore ++;
+    }
 
-    case '8': // Oben
-      if (ledRow > 0) {
-        ledRow--;
-      }
-      break;
 
-    case '4': // Links
-      if (ledCol > 0) {
-        ledCol--;
-      }
-      break;
 
-    case '6': // Rechts
-      if (ledCol < numCols - 1) {
-        ledCol++;
-      }
-      break;
-
-  }
-  updateLED();
+  // update the LCD display
+  updateDisplay();
+  delay(100);
+  // clear the LCD display for the next update
+  lcd.clear();
 }
 
 //reset option (button #)
@@ -171,9 +139,6 @@ void resetLED() {
   ledCol = 0;
   updateLED();
 }
-
-
-
 /*
 ----------
 UPDATE LED
@@ -205,14 +170,20 @@ UpdateDisplay
 ----------
 */
 void updateDisplay() {
-  // Setze den Cursor auf die erste Zeile und schreibe das Level
+  // place the cursor on the first row and write the level
   lcd.setCursor(0, 0);
-  lcd.print("Level: ");
+  lcd.print("LVL:");
   lcd.print(level);
 
-  // Setze den Cursor auf die zweite Zeile und schreibe die Punkte
+  // place the cursor on the second row and write the Points
   lcd.setCursor(0, 1);
-  lcd.print("Points: ");
+  lcd.print("PT:");
   lcd.print(points);
+
+
+  // place the cursor on the second row, 8th col and write the Highscore
+  lcd.setCursor(8, 1);
+  lcd.print("HS:");
+  lcd.print(highscore);
 }
 
