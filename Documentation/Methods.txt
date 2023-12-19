@@ -1,0 +1,52 @@
+************************************************
+dynamic:
+ 
+struct mit x und y
+ 
+movingPiece[4]
+ 
+RightLPiece -> als klassen? für einfachen reset
+LeftLPiece
+LongPiece
+SquarePiece
+TPiece
+LeftZPiece
+RightZPiece
+ 
+ 
+moveLeft return piece
+moveRight return piece
+moveDown return piece
+ 
+rotateLeft
+rotateRight
+ 
+getNewPiece return piece
+ 
+ 
+************************************************
+static:
+checkCollision -> return bool
+addToField(bool field[][], Coordinates piece[4]) -> teil in feld setzten -> return feld
+checkRowFull -> callt moveRows -> return feld
+moveRows -> return feld
+ 
+************************************************
+hardware:
+ 
+showField(bool field[][]) -> input field
+showPiece(Coordinates piece[4]) -> input piece
+ 
+clear()
+ 
+************************************************
+main:
+call moveDown
+if call checkCollision
+	field = addToField()
+	getNewPiece on Collision
+ 
+clear()
+showField()
+showPiece()
+delay..
