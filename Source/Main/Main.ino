@@ -71,23 +71,32 @@ void loop() {
   //******************************************************************
   //Hardware Loop
   staticField[0][0] = true;   //first led 1st matrix
-  staticField[7][7] = true;   //last led 1st matrix
-  staticField[0][8] = true;   //first led 2nd matrix
+  staticField[0][1] = true;   //last led 1st matrix
+  staticField[4][10] = true;   //first led 2nd matrix
   staticField[7][15] = true;  //last led 2st matrix
-  showField(staticField);
-
 
   //******************************************************************
   //Dynamic Loop
   movingPiece = moveDown(movingPiece);
+
+  if(checkCollision(staticField, movingPiece))
+  {
+    movingPiece = moveUp(movingPiece);
+    movingPiece = moveLeft(movingPiece);
+  }
+  
+  showField(staticField);
+  showPiece(movingPiece);
+  
   for(int i=0; i < 4; i++)
   {
     Serial.println(movingPiece[i].y);
   }
+  
   if(movingPiece[0].y > 10){
     movingPiece = getNewPiece();
   }
-  delay(500);
+  delay(50);
 
   //******************************************************************
   //Static Loop
@@ -109,7 +118,7 @@ void showField(bool staticField[8][16]) {
         k = j;
         addr = 0;
       }
-      lc.setLed(addr, i, k, staticField[i][j]);
+      lc.setLed(addr, k, i, staticField[i][j]);
     }
   }
 }
@@ -126,7 +135,7 @@ void showPiece(Coordinates *movingPiece) {
       k = movingPiece[i].y;
       addr = 0;
     }
-    lc.setLed(addr, movingPiece[i].x, movingPiece[i].y, true);
+    lc.setLed(addr, k, movingPiece[i].x, true);
   }
 }
 
@@ -194,7 +203,7 @@ Coordinates * moveLeft(Coordinates *piece){
 
     if(freeToMove)
     {
-      if(field[piece[i].x-1][piece[i].y])
+      if(staticField[piece[i].x-1][piece[i].y])
       {
         freeToMove = false;
       }
@@ -219,14 +228,14 @@ Coordinates * moveRight(Coordinates *piece){
 
   for(int i = 0; i < 4; i++)
   {
-    if(piece[i].x > 7 || piece[i].y >= 16) //numRows
+    if(piece[i].x > 6 || piece[i].y >= 16) //numRows
     {
       freeToMove = false;
     }
 
     if(freeToMove)
     {
-      if(field[piece[i].x+1][piece[i].y])
+      if(staticField[piece[i].x+1][piece[i].y])
       {
         freeToMove = false;
       }
@@ -247,12 +256,14 @@ Coordinates * moveRight(Coordinates *piece){
 //******************************************************************
 //Static Methods
 bool checkCollision(bool staticField[8][16], Coordinates *movingPiece) {
-  for (int r = 0; r < 16; r++) {
-    for (int c = 0; c < 8; c++) {
-      for (int i = 0; i < 4; i++) {
-        if ((staticField[r][c] && r == movingPiece[i].x && c == movingPiece[i].y) || movingPiece[i].y > 15) {
-          return true;
-        }
+
+  for(int i = 0; i < 4; i++){
+    if(movingPiece[i].y >= 0){
+      if(movingPiece[i].y >= 16){
+        return true;
+      }
+      if(staticField[movingPiece[i].x][movingPiece[i].y]){
+        return true;
       }
     }
   }
