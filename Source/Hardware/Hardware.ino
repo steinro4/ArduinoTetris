@@ -1,9 +1,11 @@
 
+
 //load libraries
 #include "LedControl.h"
 #include "binary.h"
 #include "LiquidCrystal.h"
 #include "Joystick.h"
+
 
 /*
 ----------
@@ -109,118 +111,25 @@ void loop() {
 
 }
 
-//reset option (button #)
-void resetLED() {
-  ledRow = 0;
-  ledCol = 0;
-  updateLED();
-}
+
 /*
 ----------
 UPDATE LED
 ----------
 */
-void updateLED() {
-  // Schalte alle LEDs aus
-  lc.clearDisplay(0);
-  lc.clearDisplay(1);
 
-  // Schalte die LED an der neuen Position ein
-  lc.setLed(0, ledRow, ledCol, true);
-  lc.setLed(1, ledRow, ledCol, true);
-
-
-  // Warte kurz, um die Bewegung sichtbar zu machen
-  delay(500);
-
-  // Schalte alle LEDs aus
-  lc.clearDisplay(0);
-  lc.clearDisplay(1);
-
-}
 /*
 ----------
 GAMERUNNING
 ----------
 */
-void gameRunning(){
-   // Joystick "left"
 
-  //read the value of the X- and Y-Axis
-  int xValue = analogRead(xAxis);
-  int yValue = analogRead(yAxis);
-  int buttonState = digitalRead(buttonPin);
-
-    if (xValue < (512 - threshold)) {
-      level --;
-    // Joystick "right"
-      } else if (xValue > (512 + threshold)) {
-        level ++;
-      }
-    // Joystick "up"
-    if (yValue < (512 - threshold)) {
-      points ++;
-    // Joystick "down"
-      } else if (yValue > (512 + threshold)) {
-        points --;
-      }
-    // Joystick tilt
-    if (buttonState == LOW){
-      highscore ++;
-      }
-      
-    // update the LCD display
-    updateDisplay();
-    delay(100);
-    // clear the LCD display for the next update
-    lcd.clear();
-
-}
 /*
 ----------
 GAMEOVER
 ----------
 */
-void gameOver(){
-
-  lcd.setCursor(6, 0);
-  lcd.print("GAME");
-  lcd.setCursor(6, 1);
-  lcd.print("OVER");
-}
-/*
-----------
-GAMEWON
-----------
-*/
-void gameWon(){
-
-  lcd.setCursor(6, 0);
-  lcd.print("GAME");
-  lcd.setCursor(6, 1);
-  lcd.print("WON");
-}
-/*
-----------
-UpdateDisplay
-----------
-*/
-void updateDisplay() {
-  // place the cursor on the first row and write the level
-  lcd.setCursor(0, 0);
-  lcd.print("LVL:");
-  lcd.print(level);
-
-  // place the cursor on the second row and write the Points
-  lcd.setCursor(0, 1);
-  lcd.print("PT:");
-  lcd.print(points);
 
 
-  // place the cursor on the second row, 8th col and write the Highscore
-  lcd.setCursor(8, 1);
-  lcd.print("HS:");
-  lcd.print(highscore);
-}
 
 
