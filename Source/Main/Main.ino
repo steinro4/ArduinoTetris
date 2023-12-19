@@ -1,8 +1,22 @@
-#include "Hardware.h"
+
+#include <Arduino.h>
+#include "LedControl.h"
+#include "binary.h"
+#include "LiquidCrystal.h"
+#include "Joystick.h"
+//******************************************************************
+//Hardware variables
+/*
+ DIN connects to pin 12
+ CLK connects to pin 11
+ CS connects to pin 10 
+*/
+LedControl lc = LedControl(12, 11, 10, 2);
+
 
 //******************************************************************
 //Dynamic variables
-struct Coordinates{
+struct Coordinates {
   int x;
   int y;
 };
@@ -24,17 +38,26 @@ Coordinates RightZPiece[4] = {3,-1,5,-2,4,-2,4,-1};
 //******************************************************************
 //Main variables
 // create playfield (addr, row, col)
-bool field[8][16] = { {} };
+bool staticField[8][16] = { {} };
 
 
 void setup() {
   //******************************************************************
+  //Hardware setup
+  lc.shutdown(0, false);
+  lc.shutdown(1, false);
+  // Set brightness to a low value
+  lc.setIntensity(0, 1);
+  lc.setIntensity(1, 1);
+  // Clear the display
+  lc.clearDisplay(0);
+  lc.clearDisplay(1);
+
+
+  //******************************************************************
   //Dynamic setup
   movingPiece = getNewPiece();
 
-
-
-  hardwareInit();
   Serial.begin(9600);
 
   //******************************************************************
@@ -45,11 +68,13 @@ void setup() {
 
 
 void loop() {
-  field[0][0] = true;   //first led 1st matrix
-  field[7][7] = true;   //last led 1st matrix
-  field[0][8] = true;   //first led 2nd matrix
-  field[7][15] = true;  //last led 2st matrix
-  setLeds(field);
+  //******************************************************************
+  //Hardware Loop
+  staticField[0][0] = true;   //first led 1st matrix
+  staticField[7][7] = true;   //last led 1st matrix
+  staticField[0][8] = true;   //first led 2nd matrix
+  staticField[7][15] = true;  //last led 2st matrix
+  showField(staticField);
 
 
   //******************************************************************
@@ -66,8 +91,44 @@ void loop() {
 
   //******************************************************************
   //Static Loop
+  Serial.println(checkCollision(staticField, movingPiece));
 }
 
+//******************************************************************
+//Hardware Methods
+void showField(bool staticField[8][16]) {
+  int addr = 0;
+  int k = 0;
+
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 16; j++) {
+      if (j > 7) {
+        k = j - 8;
+        addr = 1;
+      } else {
+        k = j;
+        addr = 0;
+      }
+      lc.setLed(addr, i, k, staticField[i][j]);
+    }
+  }
+}
+
+void showPiece(Coordinates *movingPiece) {
+  int addr = 0;
+  int k = 0;
+
+  for (int i = 0; i < 4; i++) {
+    if (movingPiece[i].y > 7) {
+      k = movingPiece[i].y - 8;
+      addr = 1;
+    } else {
+      k = movingPiece[i].y;
+      addr = 0;
+    }
+    lc.setLed(addr, movingPiece[i].x, movingPiece[i].y, true);
+  }
+}
 
 
 //******************************************************************
@@ -185,3 +246,15 @@ Coordinates * moveRight(Coordinates *piece){
 
 //******************************************************************
 //Static Methods
+bool checkCollision(bool staticField[8][16], Coordinates *movingPiece) {
+  for (int r = 0; r < 16; r++) {
+    for (int c = 0; c < 8; c++) {
+      for (int i = 0; i < 4; i++) {
+        if ((staticField[r][c] && r == movingPiece[i].x && c == movingPiece[i].y) || movingPiece[i].y > 15) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
