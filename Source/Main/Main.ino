@@ -60,6 +60,8 @@ void setup() {
 
   Serial.begin(9600);
 
+  Serial.println("newStart**************************");
+
   //******************************************************************
   //Static setup
 }
@@ -82,17 +84,16 @@ void loop() {
   if(checkCollision(staticField, movingPiece))
   {
     movingPiece = moveUp(movingPiece);
-    movingPiece = moveLeft(movingPiece);
+    movingPiece = moveUp(movingPiece);
+    movingPiece = moveUp(movingPiece);
+    movingPiece = moveUp(movingPiece);
+    movingPiece = turnLeft(movingPiece);
   }
   
   showField(staticField);
   showPiece(movingPiece);
   
-  for(int i=0; i < 4; i++)
-  {
-    Serial.println(movingPiece[i].y);
-  }
-  
+
   if(movingPiece[0].y > 10){
     movingPiece = getNewPiece();
   }
@@ -100,7 +101,7 @@ void loop() {
 
   //******************************************************************
   //Static Loop
-  Serial.println(checkCollision(staticField, movingPiece));
+  //Serial.println(checkCollision(staticField, movingPiece));
 }
 
 //******************************************************************
@@ -248,6 +249,35 @@ Coordinates * moveRight(Coordinates *piece){
     {
       piece[i].x++;
     }
+  }
+
+  return piece;
+}
+
+//*********************
+//Turn Left
+
+//To do: check if turning is possible (if too close to the wall)
+Coordinates * turnLeft(Coordinates *piece){
+  float xTurningPoint = 0;
+  float yTurningPoint = 0;
+
+  for(int i = 0; i < 4; i++){
+    xTurningPoint += piece[i].x;
+    yTurningPoint += piece[i].y;
+  }
+
+  xTurningPoint = round(xTurningPoint/4);
+  yTurningPoint = round(yTurningPoint/4);
+  
+  for(int i = 0; i < 4; i++){
+    int tempX = 0;
+    int tempY = 0;
+    tempX = int(xTurningPoint) + (piece[i].y - int(yTurningPoint));   
+    tempY = int(yTurningPoint) - (piece[i].x - int(xTurningPoint));
+
+    piece[i].x = tempX;
+    piece[i].y = tempY;
   }
 
   return piece;
