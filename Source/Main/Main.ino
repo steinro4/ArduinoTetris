@@ -13,6 +13,11 @@
 */
 LedControl lc = LedControl(12, 11, 10, 2);
 
+//Joystick:
+const int SW_pin = 2;  // Taster-Pin
+const int X_pin = A0;  // X-Ausgang
+const int Y_pin = A1;  // Y-Ausgang
+
 
 //******************************************************************
 //Dynamic variables
@@ -24,16 +29,17 @@ struct Coordinates {
 Coordinates *movingPiece;
 
 //Pieces
-Coordinates RightLPiece[4] = {3,-3,3,-2,3,-1,4,-1};
-Coordinates LeftLPiece[4] = {4,-3,4,-2,4,-1,3,-1};
-Coordinates LongPiece[4] = {4,-4,4,-3,4,-2,4,-1};
-Coordinates SquarePiece[4] = {4,-2,3,-2,4,-1,3,-1};
-Coordinates TPiece[4] = {5,-2,3,-2,4,-2,4,-1};
-Coordinates LeftZPiece[4] = {5,-1,3,-2,4,-2,4,-1};
-Coordinates RightZPiece[4] = {3,-1,5,-2,4,-2,4,-1};
+Coordinates RightLPiece[4] = { 3, -3, 3, -2, 3, -1, 4, -1 };
+Coordinates LeftLPiece[4] = { 4, -3, 4, -2, 4, -1, 3, -1 };
+Coordinates LongPiece[4] = { 4, -4, 4, -3, 4, -2, 4, -1 };
+Coordinates SquarePiece[4] = { 4, -2, 3, -2, 4, -1, 3, -1 };
+Coordinates TPiece[4] = { 5, -2, 3, -2, 4, -2, 4, -1 };
+Coordinates LeftZPiece[4] = { 5, -1, 3, -2, 4, -2, 4, -1 };
+Coordinates RightZPiece[4] = { 3, -1, 5, -2, 4, -2, 4, -1 };
 
 //******************************************************************
 //Static variables
+int checkCollisionCounter = 0;
 
 //******************************************************************
 //Main variables
@@ -53,10 +59,13 @@ void setup() {
   lc.clearDisplay(0);
   lc.clearDisplay(1);
 
+  //Joystick
+  pinMode(SW_pin, INPUT);
+  digitalWrite(SW_pin, HIGH);
 
   //******************************************************************
   //Dynamic setup
-  movingPiece = getNewPiece();
+  movingPiece = LongPiece;
 
   Serial.begin(9600);
 
@@ -72,36 +81,37 @@ void setup() {
 void loop() {
   //******************************************************************
   //Hardware Loop
-  staticField[0][0] = true;   //first led 1st matrix
-  staticField[0][1] = true;   //last led 1st matrix
-  staticField[4][10] = true;   //first led 2nd matrix
-  staticField[7][15] = true;  //last led 2st matrix
+  //Joystick
+  if (!digitalRead(SW_pin)) { turnLeft(movingPiece); }  //press joystick
+  if (analogRead(X_pin) > 1000) { moveRight(movingPiece); }
+  if (analogRead(X_pin) < 20) { moveLeft(movingPiece); }
+  //if (analogRead(Y_pin) > 1000) { Serial.println("down"); }
+  //if (analogRead(Y_pin) < 20) { Serial.println("up"); }
 
   //******************************************************************
   //Dynamic Loop
+
   movingPiece = moveDown(movingPiece);
 
-  if(checkCollision(staticField, movingPiece))
-  {
+  if (checkCollision(staticField, movingPiece)) {
+    checkCollisionCounter++;
+    Serial.print("Check Collision: ");
+    Serial.print(checkCollisionCounter);
+    Serial.print(" time:");
+    Serial.println(millis());
     movingPiece = moveUp(movingPiece);
-    movingPiece = moveUp(movingPiece);
-    movingPiece = moveUp(movingPiece);
-    movingPiece = moveUp(movingPiece);
-    movingPiece = turnLeft(movingPiece);
-  }
-  
-  showField(staticField);
-  showPiece(movingPiece);
-  
-
-  if(movingPiece[0].y > 10){
+    addToField(staticField, movingPiece);
     movingPiece = getNewPiece();
   }
-  delay(50);
+  showField(staticField);
+  showPiece(movingPiece);
+
 
   //******************************************************************
   //Static Loop
-  //Serial.println(checkCollision(staticField, movingPiece));
+
+  checkRowIsFull(staticField);
+  delay(200);
 }
 
 //******************************************************************
@@ -147,11 +157,11 @@ void showPiece(Coordinates *movingPiece) {
 //*********************
 //Get new Piece
 Coordinates tempPiece[4];
-Coordinates * getNewPiece(){
+Coordinates *getNewPiece() {
 
   Coordinates *tempPointer;
 
-  switch(random(7)){
+  switch (random(7)) {
     case 0: tempPointer = RightLPiece; break;
     case 1: tempPointer = LeftLPiece; break;
     case 2: tempPointer = LongPiece; break;
@@ -162,9 +172,8 @@ Coordinates * getNewPiece(){
   }
 
   //Make copy so the original doesn't get overwritten
-  for(int i = 0; i < 4; i++)
-  {
-      tempPiece[i] = tempPointer[i];
+  for (int i = 0; i < 4; i++) {
+    tempPiece[i] = tempPointer[i];
   }
 
   return tempPiece;
@@ -172,9 +181,8 @@ Coordinates * getNewPiece(){
 
 //*********************
 //Move down
-Coordinates * moveDown(Coordinates *piece){
-  for(int i = 0; i < 4; i++)
-  {
+Coordinates *moveDown(Coordinates *piece) {
+  for (int i = 0; i < 4; i++) {
     piece[i].y++;
   }
   return piece;
@@ -182,9 +190,8 @@ Coordinates * moveDown(Coordinates *piece){
 
 //*********************
 //Move up
-Coordinates * moveUp(Coordinates *piece){
-  for(int i = 0; i < 4; i++)
-  {
+Coordinates *moveUp(Coordinates *piece) {
+  for (int i = 0; i < 4; i++) {
     piece[i].y--;
   }
   return piece;
@@ -192,29 +199,24 @@ Coordinates * moveUp(Coordinates *piece){
 
 //*********************
 //Move left
-Coordinates * moveLeft(Coordinates *piece){
+Coordinates *moveLeft(Coordinates *piece) {
   bool freeToMove = true;
 
-  for(int i = 0; i < 4; i++)
-  {
-    if(piece[i].x <= 0 || piece[i].y >= 16) //numRows
+  for (int i = 0; i < 4; i++) {
+    if (piece[i].x <= 0 || piece[i].y >= 16)  //numRows
     {
       freeToMove = false;
     }
 
-    if(freeToMove)
-    {
-      if(staticField[piece[i].x-1][piece[i].y])
-      {
+    if (freeToMove) {
+      if (staticField[piece[i].x - 1][piece[i].y]) {
         freeToMove = false;
       }
     }
   }
 
-  if(freeToMove)
-  {
-    for(int i = 0; i < 4; i++)
-    {
+  if (freeToMove) {
+    for (int i = 0; i < 4; i++) {
       piece[i].x--;
     }
   }
@@ -224,29 +226,24 @@ Coordinates * moveLeft(Coordinates *piece){
 
 //*********************
 //Move right
-Coordinates * moveRight(Coordinates *piece){
+Coordinates *moveRight(Coordinates *piece) {
   bool freeToMove = true;
 
-  for(int i = 0; i < 4; i++)
-  {
-    if(piece[i].x > 6 || piece[i].y >= 16) //numRows
+  for (int i = 0; i < 4; i++) {
+    if (piece[i].x > 6 || piece[i].y >= 16)  //numRows
     {
       freeToMove = false;
     }
 
-    if(freeToMove)
-    {
-      if(staticField[piece[i].x+1][piece[i].y])
-      {
+    if (freeToMove) {
+      if (staticField[piece[i].x + 1][piece[i].y]) {
         freeToMove = false;
       }
     }
   }
 
-  if(freeToMove)
-  {
-    for(int i = 0; i < 4; i++)
-    {
+  if (freeToMove) {
+    for (int i = 0; i < 4; i++) {
       piece[i].x++;
     }
   }
@@ -258,22 +255,22 @@ Coordinates * moveRight(Coordinates *piece){
 //Turn Left
 
 //To do: check if turning is possible (if too close to the wall)
-Coordinates * turnLeft(Coordinates *piece){
+Coordinates *turnLeft(Coordinates *piece) {
   float xTurningPoint = 0;
   float yTurningPoint = 0;
 
-  for(int i = 0; i < 4; i++){
+  for (int i = 0; i < 4; i++) {
     xTurningPoint += piece[i].x;
     yTurningPoint += piece[i].y;
   }
 
-  xTurningPoint = round(xTurningPoint/4);
-  yTurningPoint = round(yTurningPoint/4);
-  
-  for(int i = 0; i < 4; i++){
+  xTurningPoint = round(xTurningPoint / 4);
+  yTurningPoint = round(yTurningPoint / 4);
+
+  for (int i = 0; i < 4; i++) {
     int tempX = 0;
     int tempY = 0;
-    tempX = int(xTurningPoint) + (piece[i].y - int(yTurningPoint));   
+    tempX = int(xTurningPoint) + (piece[i].y - int(yTurningPoint));
     tempY = int(yTurningPoint) - (piece[i].x - int(xTurningPoint));
 
     piece[i].x = tempX;
@@ -287,15 +284,59 @@ Coordinates * turnLeft(Coordinates *piece){
 //Static Methods
 bool checkCollision(bool staticField[8][16], Coordinates *movingPiece) {
 
-  for(int i = 0; i < 4; i++){
-    if(movingPiece[i].y >= 0){
-      if(movingPiece[i].y >= 16){
+  for (int i = 0; i < 4; i++) {
+    if (movingPiece[i].y >= 0) {
+      if (movingPiece[i].y >= 16) {
         return true;
       }
-      if(staticField[movingPiece[i].x][movingPiece[i].y]){
+      if (staticField[movingPiece[i].x][movingPiece[i].y]) {
         return true;
       }
     }
   }
   return false;
+}
+
+void addToField(bool field[8][16], Coordinates *movingPiece) {
+  for (int i = 0; i < 4; i++) {
+    staticField[movingPiece[i].x][movingPiece[i].y] = true;
+    Serial.print("Write true: ");
+    Serial.print("x: ");
+    Serial.print(movingPiece[i].x);
+    Serial.print(" y: ");
+    Serial.println(movingPiece[i].y);
+  }
+}
+
+bool checkRowIsFull(bool field[8][16]) {
+  bool lastRowWasFull = false;
+  int countRowInOrder = 1;
+  for (int r = 15; r >= 0; r--) {
+    bool rowIsFull = true;
+    for (int c = 0; c < 8; c++) {
+      if (field[c][r] == false) {
+        rowIsFull = false;
+        lastRowWasFull = false;
+        break;
+      }
+    }
+    if (rowIsFull) {
+      moveRows(r);
+      if (lastRowWasFull) { countRowInOrder++; }
+      lastRowWasFull = true;
+      return true;
+    }
+  }
+  return false;
+}
+
+void moveRows(int rowToDelete) {
+  for (int r = rowToDelete; r > 0; r--) {
+    for (int c = 0; c < 8; c++) {
+      staticField[c][r] = staticField[c][r - 1];
+      if (r == 1) {
+        staticField[c][0] = false;
+      }
+    }
+  }
 }
