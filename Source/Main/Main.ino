@@ -40,7 +40,9 @@ Coordinates RightZPiece[4] = { 3, -1, 5, -2, 4, -2, 4, -1 };
 
 //******************************************************************
 //Static variables
-int checkCollisionCounter = 0;
+bool gameOver = false;
+unsigned long lastMillis;
+bool doReset;
 
 //******************************************************************
 //Main variables
@@ -88,39 +90,42 @@ void setup() {
 void loop() {
   //******************************************************************
   //Hardware Loop
-  //Joystick
-  /*if (!digitalRead(SW_pin)) { turnLeft(movingPiece); }  //press joystick
-  if (analogRead(X_pin) > 1000) { moveRight(movingPiece); }
-  if (analogRead(X_pin) < 20) { moveLeft(movingPiece); }*/
-  //if (analogRead(Y_pin) > 1000) { Serial.println("down"); }
-  //if (analogRead(Y_pin) < 20) { Serial.println("up"); }
 
   //******************************************************************
   //Dynamic Loop
+  if (!gameOver) {
+    moveDown(movingPiece);
 
-  moveDown(movingPiece);
-
-  noInterrupts();
-  if (checkCollision(staticField, movingPiece)) {
-    checkCollisionCounter++;
-    Serial.print("Check Collision: ");
-    Serial.print(checkCollisionCounter);
-    Serial.print(" time:");
-    Serial.println(millis());
-    moveUp(movingPiece);
-    addToField(staticField, movingPiece);
-    getNewPiece(movingPiece);
-  }
-  showField(staticField);
-  showPiece(movingPiece);  
-  interrupts();
+    noInterrupts();
+    if (checkCollision(staticField, movingPiece)) {
+      moveUp(movingPiece);
+      addToField(staticField, movingPiece);
+      getNewPiece(movingPiece);
+    }
+    showField(staticField);
+    showPiece(movingPiece);
+    interrupts();
 
 
     //******************************************************************
     //Static Loop
     while (checkRowIsFull(staticField))
       ;
-  delay(200);
+    if (gameIsOver(staticField)) { gameOver = true; }
+    delay(200);
+  }
+
+  //reset
+  if (!digitalRead(SW_pin)) {
+    if (ton(true, lastMillis, 3000)) {
+      gameOver = false;
+      clearField();
+      getNewPiece(movingPiece);
+      lastMillis = millis();
+    }
+  } else {
+    lastMillis = millis();
+  }
 }
 
 //******************************************************************
@@ -159,7 +164,7 @@ void showPiece(Coordinates *movingPiece) {
   }
 }
 
-void checkInputs(){
+void checkInputs() {
   if (!digitalRead(SW_pin)) { turnRight(staticField, movingPiece); }  //press joystick
   if (analogRead(X_pin) > 1000) { moveRight(movingPiece); }
   if (analogRead(X_pin) < 20) { moveLeft(movingPiece); }
@@ -279,15 +284,15 @@ void turnLeft(bool staticField[8][16], Coordinates *piece) {
 
   for (int i = 0; i < 4; i++) {
 
-    if(     tempCoords[i].x < 0
-        ||  tempCoords[i].x > 7
-        ||  tempCoords[i].y > 15){
-          return; //Turning not possible due to part beeing out of the field
+    if (tempCoords[i].x < 0
+        || tempCoords[i].x > 7
+        || tempCoords[i].y > 15) {
+      return;  //Turning not possible due to part beeing out of the field
     }
 
-    if(tempCoords[i].y > 0){
-      if(staticField[tempCoords[i].x][tempCoords[i].y]){
-        return; //Turning not possible due to part beeing inside the staticField
+    if (tempCoords[i].y > 0) {
+      if (staticField[tempCoords[i].x][tempCoords[i].y]) {
+        return;  //Turning not possible due to part beeing inside the staticField
       }
     }
   }
@@ -322,15 +327,15 @@ void turnRight(bool staticField[8][16], Coordinates *piece) {
 
   for (int i = 0; i < 4; i++) {
 
-    if(     tempCoords[i].x < 0
-        ||  tempCoords[i].x > 7
-        ||  tempCoords[i].y > 15){
-          return; //Turning not possible due to part beeing out of the field
+    if (tempCoords[i].x < 0
+        || tempCoords[i].x > 7
+        || tempCoords[i].y > 15) {
+      return;  //Turning not possible due to part beeing out of the field
     }
 
-    if(tempCoords[i].y > 0){
-      if(staticField[tempCoords[i].x][tempCoords[i].y]){
-        return; //Turning not possible due to part beeing inside the staticField
+    if (tempCoords[i].y > 0) {
+      if (staticField[tempCoords[i].x][tempCoords[i].y]) {
+        return;  //Turning not possible due to part beeing inside the staticField
       }
     }
   }
@@ -360,11 +365,6 @@ bool checkCollision(bool staticField[8][16], Coordinates *movingPiece) {
 void addToField(bool field[8][16], Coordinates *movingPiece) {
   for (int i = 0; i < 4; i++) {
     staticField[movingPiece[i].x][movingPiece[i].y] = true;
-    Serial.print("Write true: ");
-    Serial.print("x: ");
-    Serial.print(movingPiece[i].x);
-    Serial.print(" y: ");
-    Serial.println(movingPiece[i].y);
   }
 }
 
@@ -399,4 +399,25 @@ void moveRows(int rowToDelete) {
       }
     }
   }
+}
+
+bool gameIsOver(bool field[8][16]) {
+  for (int c = 0; c < 8; c++) {
+    if (field[c][0]) { return true; }
+  }
+  return false;
+}
+
+void clearField() {
+  for (int r = 0; r < 16; r++) {
+    for (int c = 0; c < 8; c++) {
+      staticField[c][r] = false;
+    }
+  }
+}
+
+//start delay
+bool ton(bool start, unsigned long lastMillis, unsigned long delay) {
+  if (start && (millis() - lastMillis) >= delay) { return true; }
+  return false;
 }
