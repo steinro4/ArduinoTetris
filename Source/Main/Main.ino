@@ -4,6 +4,7 @@
 #include "binary.h"
 #include "LiquidCrystal.h"
 #include "Joystick.h"
+#include "TimerOne.h"
 //******************************************************************
 //Hardware variables
 /*
@@ -26,7 +27,7 @@ struct Coordinates {
   int y;
 };
 
-Coordinates *movingPiece;
+Coordinates movingPiece[4];
 
 //Pieces
 Coordinates RightLPiece[4] = { 3, -3, 3, -2, 3, -1, 4, -1 };
@@ -63,11 +64,17 @@ void setup() {
   pinMode(SW_pin, INPUT);
   digitalWrite(SW_pin, HIGH);
 
+  //Interrupt
+  Timer1.initialize(200000);
+  Timer1.attachInterrupt(checkInputs);
+  Timer1.start();
+
   //******************************************************************
   //Dynamic setup
-  movingPiece = LongPiece;
-
   Serial.begin(9600);
+
+  randomSeed(analogRead(A7));
+  getNewPiece(movingPiece);
 
   Serial.println("newStart**************************");
 
@@ -82,29 +89,31 @@ void loop() {
   //******************************************************************
   //Hardware Loop
   //Joystick
-  if (!digitalRead(SW_pin)) { turnLeft(movingPiece); }  //press joystick
+  /*if (!digitalRead(SW_pin)) { turnLeft(movingPiece); }  //press joystick
   if (analogRead(X_pin) > 1000) { moveRight(movingPiece); }
-  if (analogRead(X_pin) < 20) { moveLeft(movingPiece); }
+  if (analogRead(X_pin) < 20) { moveLeft(movingPiece); }*/
   //if (analogRead(Y_pin) > 1000) { Serial.println("down"); }
   //if (analogRead(Y_pin) < 20) { Serial.println("up"); }
 
   //******************************************************************
   //Dynamic Loop
 
-  movingPiece = moveDown(movingPiece);
+  moveDown(movingPiece);
 
+  noInterrupts();
   if (checkCollision(staticField, movingPiece)) {
     checkCollisionCounter++;
     Serial.print("Check Collision: ");
     Serial.print(checkCollisionCounter);
     Serial.print(" time:");
     Serial.println(millis());
-    movingPiece = moveUp(movingPiece);
+    moveUp(movingPiece);
     addToField(staticField, movingPiece);
-    movingPiece = getNewPiece();
+    getNewPiece(movingPiece);
   }
   showField(staticField);
-  showPiece(movingPiece);
+  showPiece(movingPiece);  
+  interrupts();
 
 
   //******************************************************************
@@ -150,17 +159,20 @@ void showPiece(Coordinates *movingPiece) {
   }
 }
 
+void checkInputs(){
+  if (!digitalRead(SW_pin)) { turnRight(staticField, movingPiece); }  //press joystick
+  if (analogRead(X_pin) > 1000) { moveRight(movingPiece); }
+  if (analogRead(X_pin) < 20) { moveLeft(movingPiece); }
+  if (analogRead(Y_pin) > 1000) { turnLeft(staticField, movingPiece); }
+}
 
 //******************************************************************
 //Dynamic Methods
 
 //*********************
 //Get new Piece
-Coordinates tempPiece[4];
-Coordinates *getNewPiece() {
-
+void getNewPiece(Coordinates *piece) {
   Coordinates *tempPointer;
-
   switch (random(7)) {
     case 0: tempPointer = RightLPiece; break;
     case 1: tempPointer = LeftLPiece; break;
@@ -170,36 +182,31 @@ Coordinates *getNewPiece() {
     case 5: tempPointer = LeftZPiece; break;
     case 6: tempPointer = RightZPiece; break;
   }
-
   //Make copy so the original doesn't get overwritten
   for (int i = 0; i < 4; i++) {
-    tempPiece[i] = tempPointer[i];
+    piece[i] = tempPointer[i];
   }
-
-  return tempPiece;
 }
 
 //*********************
 //Move down
-Coordinates *moveDown(Coordinates *piece) {
+void moveDown(Coordinates *piece) {
   for (int i = 0; i < 4; i++) {
     piece[i].y++;
   }
-  return piece;
 }
 
 //*********************
 //Move up
-Coordinates *moveUp(Coordinates *piece) {
+void moveUp(Coordinates *piece) {
   for (int i = 0; i < 4; i++) {
     piece[i].y--;
   }
-  return piece;
 }
 
 //*********************
 //Move left
-Coordinates *moveLeft(Coordinates *piece) {
+void moveLeft(Coordinates *piece) {
   bool freeToMove = true;
 
   for (int i = 0; i < 4; i++) {
@@ -220,13 +227,11 @@ Coordinates *moveLeft(Coordinates *piece) {
       piece[i].x--;
     }
   }
-
-  return piece;
 }
 
 //*********************
 //Move right
-Coordinates *moveRight(Coordinates *piece) {
+void moveRight(Coordinates *piece) {
   bool freeToMove = true;
 
   for (int i = 0; i < 4; i++) {
@@ -247,17 +252,15 @@ Coordinates *moveRight(Coordinates *piece) {
       piece[i].x++;
     }
   }
-
-  return piece;
 }
 
 //*********************
 //Turn Left
-
-//To do: check if turning is possible (if too close to the wall)
-Coordinates *turnLeft(Coordinates *piece) {
+void turnLeft(bool staticField[8][16], Coordinates *piece) {
   float xTurningPoint = 0;
   float yTurningPoint = 0;
+
+  Coordinates tempCoords[4];
 
   for (int i = 0; i < 4; i++) {
     xTurningPoint += piece[i].x;
@@ -270,14 +273,71 @@ Coordinates *turnLeft(Coordinates *piece) {
   for (int i = 0; i < 4; i++) {
     int tempX = 0;
     int tempY = 0;
-    tempX = int(xTurningPoint) + (piece[i].y - int(yTurningPoint));
-    tempY = int(yTurningPoint) - (piece[i].x - int(xTurningPoint));
-
-    piece[i].x = tempX;
-    piece[i].y = tempY;
+    tempCoords[i].x = int(xTurningPoint) + (piece[i].y - int(yTurningPoint));
+    tempCoords[i].y = int(yTurningPoint) - (piece[i].x - int(xTurningPoint));
   }
 
-  return piece;
+  for (int i = 0; i < 4; i++) {
+
+    if(     tempCoords[i].x < 0
+        ||  tempCoords[i].x > 7
+        ||  tempCoords[i].y > 15){
+          return; //Turning not possible due to part beeing out of the field
+    }
+
+    if(tempCoords[i].y > 0){
+      if(staticField[tempCoords[i].x][tempCoords[i].y]){
+        return; //Turning not possible due to part beeing inside the staticField
+      }
+    }
+  }
+
+  for (int i = 0; i < 4; i++) {
+    piece[i] = tempCoords[i];
+  }
+}
+
+//*********************
+//Turn Right
+void turnRight(bool staticField[8][16], Coordinates *piece) {
+  float xTurningPoint = 0;
+  float yTurningPoint = 0;
+
+  Coordinates tempCoords[4];
+
+  for (int i = 0; i < 4; i++) {
+    xTurningPoint += piece[i].x;
+    yTurningPoint += piece[i].y;
+  }
+
+  xTurningPoint = round(xTurningPoint / 4);
+  yTurningPoint = round(yTurningPoint / 4);
+
+  for (int i = 0; i < 4; i++) {
+    int tempX = 0;
+    int tempY = 0;
+    tempCoords[i].x = int(xTurningPoint) - (piece[i].y - int(yTurningPoint));
+    tempCoords[i].y = int(yTurningPoint) + (piece[i].x - int(xTurningPoint));
+  }
+
+  for (int i = 0; i < 4; i++) {
+
+    if(     tempCoords[i].x < 0
+        ||  tempCoords[i].x > 7
+        ||  tempCoords[i].y > 15){
+          return; //Turning not possible due to part beeing out of the field
+    }
+
+    if(tempCoords[i].y > 0){
+      if(staticField[tempCoords[i].x][tempCoords[i].y]){
+        return; //Turning not possible due to part beeing inside the staticField
+      }
+    }
+  }
+
+  for (int i = 0; i < 4; i++) {
+    piece[i] = tempCoords[i];
+  }
 }
 
 //******************************************************************
