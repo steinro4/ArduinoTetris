@@ -116,10 +116,10 @@ void loop() {
   interrupts();
 
 
-  //******************************************************************
-  //Static Loop
-
-  checkRowIsFull(staticField);
+    //******************************************************************
+    //Static Loop
+    while (checkRowIsFull(staticField))
+      ;
   delay(200);
 }
 
