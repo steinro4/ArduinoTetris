@@ -27,7 +27,18 @@ struct Coordinates {
   int y;
 };
 
+enum Shapes{
+  eRightLPiece = 0,
+  eLeftLPiece = 1,
+  eLongPiece = 2,
+  eSquarePiece = 3,
+  eTPiece = 4,
+  eLeftZPiece = 5,
+  eRightZPiece = 6
+};
+
 Coordinates movingPiece[4];
+Shapes movingShape;
 
 //Pieces
 Coordinates RightLPiece[4] = { 3, -3, 3, -2, 3, -1, 4, -1 };
@@ -178,7 +189,9 @@ void checkInputs() {
 //Get new Piece
 void getNewPiece(Coordinates *piece) {
   Coordinates *tempPointer;
-  switch (random(7)) {
+  movingShape = random(7);
+  
+  switch (movingShape) {
     case 0: tempPointer = RightLPiece; break;
     case 1: tempPointer = LeftLPiece; break;
     case 2: tempPointer = LongPiece; break;
@@ -264,6 +277,9 @@ void moveRight(Coordinates *piece) {
 void turnLeft(bool staticField[8][16], Coordinates *piece) {
   float xTurningPoint = 0;
   float yTurningPoint = 0;
+  
+  int tempX = 0;
+  int tempY = 0;
 
   Coordinates tempCoords[4];
 
@@ -272,15 +288,33 @@ void turnLeft(bool staticField[8][16], Coordinates *piece) {
     yTurningPoint += piece[i].y;
   }
 
-  xTurningPoint = round(xTurningPoint / 4);
-  yTurningPoint = round(yTurningPoint / 4);
+  switch(movingShape){
+    case eRightLPiece:
+    case eLeftLPiece:
+    case eTPiece:
+      xTurningPoint = round(xTurningPoint / 4);
+      yTurningPoint = round(yTurningPoint / 4);
 
-  for (int i = 0; i < 4; i++) {
-    int tempX = 0;
-    int tempY = 0;
-    tempCoords[i].x = int(xTurningPoint) + (piece[i].y - int(yTurningPoint));
-    tempCoords[i].y = int(yTurningPoint) - (piece[i].x - int(xTurningPoint));
+      for (int i = 0; i < 4; i++) {
+        tempCoords[i].x = int(xTurningPoint) + (piece[i].y - int(yTurningPoint));
+        tempCoords[i].y = int(yTurningPoint) - (piece[i].x - int(xTurningPoint));
+      }
+      break;
+    case eSquarePiece: return;
+    case eLongPiece:
+    case eLeftZPiece:
+    case eRightZPiece:
+      xTurningPoint = xTurningPoint / 4;
+      yTurningPoint = yTurningPoint / 4;
+
+      for (int i = 0; i < 4; i++) {
+        tempCoords[i].x = int(xTurningPoint) + (piece[i].y - int(yTurningPoint));
+        tempCoords[i].y = int(yTurningPoint) - (piece[i].x - round(xTurningPoint));
+      }
+      break;
   }
+
+  
 
   for (int i = 0; i < 4; i++) {
 
@@ -307,6 +341,8 @@ void turnLeft(bool staticField[8][16], Coordinates *piece) {
 void turnRight(bool staticField[8][16], Coordinates *piece) {
   float xTurningPoint = 0;
   float yTurningPoint = 0;
+  int tempX = 0;
+  int tempY = 0;
 
   Coordinates tempCoords[4];
 
@@ -315,14 +351,31 @@ void turnRight(bool staticField[8][16], Coordinates *piece) {
     yTurningPoint += piece[i].y;
   }
 
-  xTurningPoint = round(xTurningPoint / 4);
-  yTurningPoint = round(yTurningPoint / 4);
+  switch(movingShape){
+    case eRightLPiece:
+    case eLeftLPiece:
+    case eTPiece:
+      xTurningPoint = round(xTurningPoint / 4);
+      yTurningPoint = round(yTurningPoint / 4);
 
-  for (int i = 0; i < 4; i++) {
-    int tempX = 0;
-    int tempY = 0;
-    tempCoords[i].x = int(xTurningPoint) - (piece[i].y - int(yTurningPoint));
-    tempCoords[i].y = int(yTurningPoint) + (piece[i].x - int(xTurningPoint));
+      for (int i = 0; i < 4; i++) {
+        tempCoords[i].x = int(xTurningPoint) - (piece[i].y - int(yTurningPoint));
+        tempCoords[i].y = int(yTurningPoint) + (piece[i].x - int(xTurningPoint));
+      }
+
+      break;
+    case eSquarePiece: return;
+    case eLongPiece:
+    case eLeftZPiece:
+    case eRightZPiece:
+      xTurningPoint = xTurningPoint / 4;
+      yTurningPoint = yTurningPoint / 4;
+
+      for (int i = 0; i < 4; i++) {
+        tempCoords[i].x = int(xTurningPoint) - (piece[i].y - round(yTurningPoint));
+        tempCoords[i].y = int(yTurningPoint) + (piece[i].x - int(xTurningPoint));
+      }
+      break;
   }
 
   for (int i = 0; i < 4; i++) {
