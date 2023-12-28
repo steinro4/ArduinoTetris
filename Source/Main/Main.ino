@@ -19,6 +19,12 @@ const int SW_pin = 2;  // Taster-Pin
 const int X_pin = A0;  // X-Ausgang
 const int Y_pin = A1;  // Y-Ausgang
 
+//Buttons
+const int ButtonUp = 50;     //1st button on top
+const int ButtonLeft = 51;   //2nd button on the left
+const int ButtonRight = 52;  //3rd button on the right
+const int ButtonDown = 53;   //4th button on the bottom
+
 
 //******************************************************************
 //Dynamic variables
@@ -27,7 +33,12 @@ struct Coordinates {
   int y;
 };
 
-enum Shapes{
+bool ButtonUpPressed;
+bool ButtonLeftPressed;
+bool ButtonRightPressed;
+bool ButtonDownPressed;
+
+enum Shapes {
   eRightLPiece = 0,
   eLeftLPiece = 1,
   eLongPiece = 2,
@@ -53,7 +64,7 @@ Coordinates RightZPiece[4] = { 3, -1, 5, -2, 4, -2, 4, -1 };
 //Static variables
 bool gameOver = false;
 unsigned long lastMillis;
-bool doReset;
+unsigned long lastMillis2;
 
 //******************************************************************
 //Main variables
@@ -77,10 +88,11 @@ void setup() {
   pinMode(SW_pin, INPUT);
   digitalWrite(SW_pin, HIGH);
 
-  //Interrupt
-  Timer1.initialize(200000);
-  Timer1.attachInterrupt(checkInputs);
-  Timer1.start();
+  //Buttons
+  pinMode(ButtonUp, INPUT);
+  pinMode(ButtonLeft, INPUT);
+  pinMode(ButtonRight, INPUT);
+  pinMode(ButtonDown, INPUT);
 
   //******************************************************************
   //Dynamic setup
@@ -105,30 +117,37 @@ void loop() {
   //******************************************************************
   //Dynamic Loop
   if (!gameOver) {
-    moveDown(movingPiece);
+    if (!checkCollision(movingPiece)) { moveDown(movingPiece); }
+    if (!checkCollision(movingPiece)) { movePiece(); }
 
-    noInterrupts();
-    if (checkCollision(staticField, movingPiece)) {
+    if (checkCollision(movingPiece)) {
       moveUp(movingPiece);
-      addToField(staticField, movingPiece);
+      addToField(movingPiece);
       getNewPiece(movingPiece);
     }
-    showField(staticField);
-    showPiece(movingPiece);
-    interrupts();
 
+    showField();
+    showPiece(movingPiece);
 
     //******************************************************************
     //Static Loop
     while (checkRowIsFull(staticField))
       ;
     if (gameIsOver(staticField)) { gameOver = true; }
-    delay(200);
-  }
 
+    //delay
+    lastMillis2 = millis();
+    while (true) {
+      if ((lastMillis2 + 100) < millis()) {
+        break;
+      } else {
+        checkInputs();
+      }
+    }
+  }
   //reset
-  if (!digitalRead(SW_pin)) {
-    if (ton(true, lastMillis, 3000)) {
+  if (digitalRead(ButtonLeft) && digitalRead(ButtonRight)) {
+    if (ton(true, lastMillis, 1000)) {
       gameOver = false;
       clearField();
       getNewPiece(movingPiece);
@@ -141,7 +160,7 @@ void loop() {
 
 //******************************************************************
 //Hardware Methods
-void showField(bool staticField[8][16]) {
+void showField() {
   int addr = 0;
   int k = 0;
 
@@ -176,10 +195,14 @@ void showPiece(Coordinates *movingPiece) {
 }
 
 void checkInputs() {
-  if (!digitalRead(SW_pin)) { turnRight(staticField, movingPiece); }  //press joystick
+  /*if (!digitalRead(SW_pin)) { turnRight(staticField, movingPiece); }  //press joystick
   if (analogRead(X_pin) > 1000) { moveRight(movingPiece); }
   if (analogRead(X_pin) < 20) { moveLeft(movingPiece); }
-  if (analogRead(Y_pin) > 1000) { turnLeft(staticField, movingPiece); }
+  if (analogRead(Y_pin) > 1000) { turnLeft(staticField, movingPiece); }*/
+  if (digitalRead(ButtonUp)) { ButtonUpPressed = true; }
+  if (digitalRead(ButtonRight)) { ButtonRightPressed = true; }
+  if (digitalRead(ButtonLeft)) { ButtonLeftPressed = true; }
+  if (digitalRead(ButtonDown)) { ButtonDownPressed = true; }
 }
 
 //******************************************************************
@@ -190,7 +213,7 @@ void checkInputs() {
 void getNewPiece(Coordinates *piece) {
   Coordinates *tempPointer;
   movingShape = random(7);
-  
+
   switch (movingShape) {
     case 0: tempPointer = RightLPiece; break;
     case 1: tempPointer = LeftLPiece; break;
@@ -277,7 +300,7 @@ void moveRight(Coordinates *piece) {
 void turnLeft(bool staticField[8][16], Coordinates *piece) {
   float xTurningPoint = 0;
   float yTurningPoint = 0;
-  
+
   int tempX = 0;
   int tempY = 0;
 
@@ -288,7 +311,7 @@ void turnLeft(bool staticField[8][16], Coordinates *piece) {
     yTurningPoint += piece[i].y;
   }
 
-  switch(movingShape){
+  switch (movingShape) {
     case eRightLPiece:
     case eLeftLPiece:
     case eTPiece:
@@ -314,7 +337,7 @@ void turnLeft(bool staticField[8][16], Coordinates *piece) {
       break;
   }
 
-  
+
 
   for (int i = 0; i < 4; i++) {
 
@@ -351,7 +374,7 @@ void turnRight(bool staticField[8][16], Coordinates *piece) {
     yTurningPoint += piece[i].y;
   }
 
-  switch(movingShape){
+  switch (movingShape) {
     case eRightLPiece:
     case eLeftLPiece:
     case eTPiece:
@@ -398,9 +421,17 @@ void turnRight(bool staticField[8][16], Coordinates *piece) {
   }
 }
 
+void movePiece() {
+  if (ButtonUpPressed) { turnRight(staticField, movingPiece); }
+  if (ButtonRightPressed) { moveRight(movingPiece); }
+  if (ButtonLeftPressed) { moveLeft(movingPiece); }
+  if (ButtonDownPressed) { moveDown(movingPiece); }
+  ButtonUpPressed = ButtonRightPressed = ButtonLeftPressed = ButtonDownPressed = false;
+}
+
 //******************************************************************
 //Static Methods
-bool checkCollision(bool staticField[8][16], Coordinates *movingPiece) {
+bool checkCollision(Coordinates *movingPiece) {
 
   for (int i = 0; i < 4; i++) {
     if (movingPiece[i].y >= 0) {
@@ -415,7 +446,7 @@ bool checkCollision(bool staticField[8][16], Coordinates *movingPiece) {
   return false;
 }
 
-void addToField(bool field[8][16], Coordinates *movingPiece) {
+void addToField(Coordinates *movingPiece) {
   for (int i = 0; i < 4; i++) {
     staticField[movingPiece[i].x][movingPiece[i].y] = true;
   }
