@@ -3,7 +3,6 @@
 #include "LedControl.h"
 #include "binary.h"
 #include "LiquidCrystal.h"
-#include "Joystick.h"
 #include "TimerOne.h"
 //******************************************************************
 //Hardware variables
@@ -14,16 +13,12 @@
 */
 LedControl lc = LedControl(12, 11, 10, 2);
 
-//Joystick:
-const int SW_pin = 2;  // Taster-Pin
-const int X_pin = A0;  // X-Ausgang
-const int Y_pin = A1;  // Y-Ausgang
-
 //Buttons
-const int ButtonUp = 50;     //1st button on top
-const int ButtonLeft = 51;   //2nd button on the left
-const int ButtonRight = 52;  //3rd button on the right
-const int ButtonDown = 53;   //4th button on the bottom
+const int ButtonTurnLeft = 49;
+const int ButtonTurnRight = 50;
+const int ButtonMoveLeft = 51;
+const int ButtonMoveRight = 52;
+const int ButtonMoveDown = 53;
 
 
 //******************************************************************
@@ -33,10 +28,11 @@ struct Coordinates {
   int y;
 };
 
-bool ButtonUpPressed;
-bool ButtonLeftPressed;
-bool ButtonRightPressed;
-bool ButtonDownPressed;
+bool ButtonTurnLeftPressed;
+bool ButtonTurnRightPressed;
+bool ButtonMoveLeftPressed;
+bool ButtonMoveRightPressed;
+bool ButtonMoveDownPressed;
 
 enum Shapes {
   eRightLPiece = 0,
@@ -84,15 +80,12 @@ void setup() {
   lc.clearDisplay(0);
   lc.clearDisplay(1);
 
-  //Joystick
-  pinMode(SW_pin, INPUT);
-  digitalWrite(SW_pin, HIGH);
-
   //Buttons
-  pinMode(ButtonUp, INPUT);
-  pinMode(ButtonLeft, INPUT);
-  pinMode(ButtonRight, INPUT);
-  pinMode(ButtonDown, INPUT);
+  pinMode(ButtonTurnLeft, INPUT);
+  pinMode(ButtonTurnRight, INPUT);
+  pinMode(ButtonMoveLeft, INPUT);
+  pinMode(ButtonMoveRight, INPUT);
+  pinMode(ButtonMoveDown, INPUT);
 
   //******************************************************************
   //Dynamic setup
@@ -106,8 +99,6 @@ void setup() {
   //******************************************************************
   //Static setup
 }
-
-
 
 
 void loop() {
@@ -146,7 +137,7 @@ void loop() {
     }
   }
   //reset
-  if (digitalRead(ButtonLeft) && digitalRead(ButtonRight)) {
+  if (digitalRead(ButtonTurnLeft) && digitalRead(ButtonMoveRight)) {
     if (ton(true, lastMillis, 1000)) {
       gameOver = false;
       clearField();
@@ -195,14 +186,11 @@ void showPiece(Coordinates *movingPiece) {
 }
 
 void checkInputs() {
-  /*if (!digitalRead(SW_pin)) { turnRight(staticField, movingPiece); }  //press joystick
-  if (analogRead(X_pin) > 1000) { moveRight(movingPiece); }
-  if (analogRead(X_pin) < 20) { moveLeft(movingPiece); }
-  if (analogRead(Y_pin) > 1000) { turnLeft(staticField, movingPiece); }*/
-  if (digitalRead(ButtonUp)) { ButtonUpPressed = true; }
-  if (digitalRead(ButtonRight)) { ButtonRightPressed = true; }
-  if (digitalRead(ButtonLeft)) { ButtonLeftPressed = true; }
-  if (digitalRead(ButtonDown)) { ButtonDownPressed = true; }
+  if (digitalRead(ButtonTurnLeft)) { ButtonTurnLeftPressed = true; }
+  if (digitalRead(ButtonTurnRight)) { ButtonTurnRightPressed = true; }
+  if (digitalRead(ButtonMoveLeft)) { ButtonMoveLeftPressed = true; }
+  if (digitalRead(ButtonMoveRight)) { ButtonMoveRightPressed = true; }
+  if (digitalRead(ButtonMoveDown)) { ButtonMoveDownPressed = true; }
 }
 
 //******************************************************************
@@ -422,11 +410,12 @@ void turnRight(bool staticField[8][16], Coordinates *piece) {
 }
 
 void movePiece() {
-  if (ButtonUpPressed) { turnRight(staticField, movingPiece); }
-  if (ButtonRightPressed) { moveRight(movingPiece); }
-  if (ButtonLeftPressed) { moveLeft(movingPiece); }
-  if (ButtonDownPressed) { moveDown(movingPiece); }
-  ButtonUpPressed = ButtonRightPressed = ButtonLeftPressed = ButtonDownPressed = false;
+  if (ButtonTurnLeftPressed) { turnLeft(staticField, movingPiece); }
+  if (ButtonTurnRightPressed) { turnRight(staticField, movingPiece); }
+  if (ButtonMoveRightPressed) { moveRight(movingPiece); }
+  if (ButtonMoveLeftPressed) { moveLeft(movingPiece); }
+  if (ButtonMoveDownPressed) { moveDown(movingPiece); }
+  ButtonTurnLeftPressed = ButtonTurnRightPressed = ButtonMoveLeftPressed = ButtonMoveRightPressed = ButtonMoveDownPressed = false;
 }
 
 //******************************************************************
