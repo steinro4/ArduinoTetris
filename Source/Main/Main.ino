@@ -4,6 +4,80 @@
 #include "binary.h"
 #include "LiquidCrystal.h"
 #include "TimerOne.h"
+#include "pitches.h"
+
+//******************************************************************
+//Sound
+//notes in the melody:
+int melody[] = {
+  NOTE_E5, NOTE_E3, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5, NOTE_D5, NOTE_C5, 
+  NOTE_B4, NOTE_A4, NOTE_A3, NOTE_A4, NOTE_C5, NOTE_E5, NOTE_A3, NOTE_D5,
+  NOTE_C5, NOTE_B4, NOTE_E4, NOTE_G4, NOTE_C5, NOTE_D5, NOTE_E3, NOTE_E5,
+  NOTE_E3, NOTE_C5, NOTE_A3, NOTE_A4, NOTE_A3, NOTE_A4, NOTE_A3, NOTE_B2, 
+  NOTE_C3, NOTE_D3, NOTE_D5, NOTE_F5, NOTE_A5, NOTE_C5, NOTE_C5, NOTE_G5, 
+  NOTE_F5, NOTE_E5, NOTE_C3, 0, NOTE_C5, NOTE_E5, NOTE_A4, NOTE_G4, NOTE_D5,
+  NOTE_C5, NOTE_B4, NOTE_E4, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_G4, NOTE_E5, 
+  NOTE_G4, NOTE_C5, NOTE_E4, NOTE_A4, NOTE_E3, NOTE_A4, 0, 
+  NOTE_E5, NOTE_E3, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5, NOTE_D5, NOTE_C5, 
+  NOTE_B4, NOTE_A4, NOTE_A3, NOTE_A4, NOTE_C5, NOTE_E5, NOTE_A3, NOTE_D5,
+  NOTE_C5, NOTE_B4, NOTE_E4, NOTE_G4, NOTE_C5, NOTE_D5, NOTE_E3, NOTE_E5,
+  NOTE_E3, NOTE_C5, NOTE_A3, NOTE_A4, NOTE_A3, NOTE_A4, NOTE_A3, NOTE_B2, 
+  NOTE_C3, NOTE_D3, NOTE_D5, NOTE_F5, NOTE_A5, NOTE_C5, NOTE_C5, NOTE_G5, 
+  NOTE_F5, NOTE_E5, NOTE_C3, 0, NOTE_C5, NOTE_E5, NOTE_A4, NOTE_G4, NOTE_D5,
+  NOTE_C5, NOTE_B4, NOTE_E4, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_G4, NOTE_E5, 
+  NOTE_G4, NOTE_C5, NOTE_E4, NOTE_A4, NOTE_E3, NOTE_A4, 0,
+  NOTE_E4, NOTE_E3, NOTE_A2, NOTE_E3, NOTE_C4, NOTE_E3, NOTE_A2, NOTE_E3, 
+  NOTE_D4, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_B3, NOTE_E3, NOTE_GS2, NOTE_E3,
+  NOTE_C4, NOTE_E3, NOTE_A2, NOTE_E3, NOTE_A3, NOTE_E3, NOTE_A2, NOTE_E3, 
+  NOTE_GS3, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_B3, NOTE_E3, NOTE_GS2, NOTE_E3, 
+  NOTE_E4, NOTE_E3, NOTE_A2, NOTE_E3, NOTE_C4, NOTE_E3, NOTE_A2, NOTE_E3, 
+  NOTE_D4, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_B3, NOTE_E3, NOTE_GS2, NOTE_E3,
+  NOTE_C4, NOTE_E3, NOTE_E4, NOTE_E3, NOTE_A4, NOTE_E3, NOTE_A2, NOTE_E3, 
+  NOTE_GS4, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_GS2, NOTE_E3,
+  NOTE_E5, NOTE_E3, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5, NOTE_D5, NOTE_C5, 
+  NOTE_B4, NOTE_A4, NOTE_A3, NOTE_A4, NOTE_C5, NOTE_E5, NOTE_A3, NOTE_D5,
+  NOTE_C5, NOTE_B4, NOTE_E4, NOTE_G4, NOTE_C5, NOTE_D5, NOTE_E3, NOTE_E5,
+  NOTE_E3, NOTE_C5, NOTE_A3, NOTE_A4, NOTE_A3, NOTE_A4, NOTE_A3, NOTE_B2, 
+  NOTE_C3, NOTE_D3, NOTE_D5, NOTE_F5, NOTE_A5, NOTE_C5, NOTE_C5, NOTE_G5, 
+  NOTE_F5, NOTE_E5, NOTE_C3, 0, NOTE_C5, NOTE_E5, NOTE_A4, NOTE_G4, NOTE_D5,
+  NOTE_C5, NOTE_B4, NOTE_E4, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_G4, NOTE_E5, 
+  NOTE_G4, NOTE_C5, NOTE_E4, NOTE_A4, NOTE_E3, NOTE_A4, 0, 
+  NOTE_E5, NOTE_E3, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_E5, NOTE_D5, NOTE_C5, 
+  NOTE_B4, NOTE_A4, NOTE_A3, NOTE_A4, NOTE_C5, NOTE_E5, NOTE_A3, NOTE_D5,
+  NOTE_C5, NOTE_B4, NOTE_E4, NOTE_G4, NOTE_C5, NOTE_D5, NOTE_E3, NOTE_E5,
+  NOTE_E3, NOTE_C5, NOTE_A3, NOTE_A4, NOTE_A3, NOTE_A4, NOTE_A3, NOTE_B2, 
+  NOTE_C3, NOTE_D3, NOTE_D5, NOTE_F5, NOTE_A5, NOTE_C5, NOTE_C5, NOTE_G5, 
+  NOTE_F5, NOTE_E5, NOTE_C3, 0, NOTE_C5, NOTE_E5, NOTE_A4, NOTE_G4, NOTE_D5,
+  NOTE_C5, NOTE_B4, NOTE_E4, NOTE_B4, NOTE_C5, NOTE_D5, NOTE_G4, NOTE_E5, 
+  NOTE_G4, NOTE_C5, NOTE_E4, NOTE_A4, NOTE_E3, NOTE_A4, 0,
+  NOTE_E4, NOTE_E3, NOTE_A2, NOTE_E3, NOTE_C4, NOTE_E3, NOTE_A2, NOTE_E3, 
+  NOTE_D4, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_B3, NOTE_E3, NOTE_GS2, NOTE_E3,
+  NOTE_C4, NOTE_E3, NOTE_A2, NOTE_E3, NOTE_A3, NOTE_E3, NOTE_A2, NOTE_E3, 
+  NOTE_GS3, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_B3, NOTE_E3, NOTE_GS2, NOTE_E3, 
+  NOTE_E4, NOTE_E3, NOTE_A2, NOTE_E3, NOTE_C4, NOTE_E3, NOTE_A2, NOTE_E3, 
+  NOTE_D4, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_B3, NOTE_E3, NOTE_GS2, NOTE_E3,
+  NOTE_C4, NOTE_E3, NOTE_E4, NOTE_E3, NOTE_A4, NOTE_E3, NOTE_A2, NOTE_E3, 
+  NOTE_GS4, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_GS2, NOTE_E3, NOTE_GS2, NOTE_E3,
+};
+
+//note durations: 4 = quarter note, 8 = eighth note, etc
+int noteDurations[] = {
+  8,8,8,8,8,16,16,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+  8,4,8,8,16,16,8,8,8,8,8,8,8,16,16,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,
+  8,8,8,8,8,16,16,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+  8,4,8,8,16,16,8,8,8,8,8,8,8,16,16,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,
+  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+  8,8,8,8,8,16,16,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+  8,4,8,8,16,16,8,8,8,8,8,8,8,16,16,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,
+  8,8,8,8,8,16,16,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+  8,4,8,8,16,16,8,8,8,8,8,8,8,16,16,8,8,8,8,8,8,8,8,8,8,8,8,8,8,4,4,
+  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+};
+
+bool soundOn = true;
+
 //******************************************************************
 //Hardware variables
 /*
@@ -14,12 +88,14 @@
 LedControl lc = LedControl(12, 11, 10, 2);
 
 //Buttons
-const int ButtonTurnLeft = 49;
-const int ButtonTurnRight = 50;
-const int ButtonMoveLeft = 51;
-const int ButtonMoveRight = 52;
-const int ButtonMoveDown = 53;
+const int ButtonTurnLeft = 3;
+const int ButtonTurnRight = 18;
+const int ButtonMoveLeft = 19;
+const int ButtonMoveRight = 20;
+const int ButtonMoveDown = 21;
 
+//Buzzerpin
+const int BuzzerPin = 9;
 
 //******************************************************************
 //Dynamic variables
@@ -33,6 +109,15 @@ bool ButtonTurnRightPressed;
 bool ButtonMoveLeftPressed;
 bool ButtonMoveRightPressed;
 bool ButtonMoveDownPressed;
+
+unsigned long turnLeftCooldown = 0;
+unsigned long turnRightCooldown = 0;
+unsigned long moveLeftCooldown = 0;
+unsigned long moveRightCooldown = 0;
+unsigned long moveDownCooldown = 0;
+
+const int cooldownTime = 50;    //Cooldowntime of turnbuttons
+const int moveTimeout = 100;    //Timeout for sideways movement
 
 enum Shapes {
   eRightLPiece = 0,
@@ -56,16 +141,20 @@ Coordinates TPiece[4] = { 5, -2, 3, -2, 4, -2, 4, -1 };
 Coordinates LeftZPiece[4] = { 5, -1, 3, -2, 4, -2, 4, -1 };
 Coordinates RightZPiece[4] = { 3, -1, 5, -2, 4, -2, 4, -1 };
 
+bool movementPossible = true;
+
 //******************************************************************
 //Static variables
-bool gameOver = false;
+bool gameOver = true;
 unsigned long lastMillis;
-unsigned long lastMillis2;
 
 //******************************************************************
 //Main variables
 // create playfield (addr, row, col)
 bool staticField[8][16] = { {} };
+
+//Game variables
+int speed = 150;
 
 
 void setup() {
@@ -81,11 +170,25 @@ void setup() {
   lc.clearDisplay(1);
 
   //Buttons
-  pinMode(ButtonTurnLeft, INPUT);
-  pinMode(ButtonTurnRight, INPUT);
-  pinMode(ButtonMoveLeft, INPUT);
-  pinMode(ButtonMoveRight, INPUT);
-  pinMode(ButtonMoveDown, INPUT);
+  pinMode(ButtonTurnLeft, INPUT_PULLUP);
+  pinMode(ButtonTurnRight, INPUT_PULLUP);
+  pinMode(ButtonMoveLeft, INPUT_PULLUP);
+  pinMode(ButtonMoveRight, INPUT_PULLUP);
+  pinMode(ButtonMoveDown, INPUT_PULLUP);
+
+  attachInterrupt(digitalPinToInterrupt(ButtonTurnLeft), turnLeftPressed, RISING);
+  attachInterrupt(digitalPinToInterrupt(ButtonTurnRight), turnRightPressed, RISING);
+  attachInterrupt(digitalPinToInterrupt(ButtonMoveLeft), moveLeftPressed, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ButtonMoveRight), moveRightPressed, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ButtonMoveDown), moveDownPressed, CHANGE);
+
+  //Buzzer
+  pinMode(BuzzerPin, OUTPUT);
+
+  //Interrupt
+  Timer1.initialize(10000);
+  Timer1.attachInterrupt(interruptLoop);
+  Timer1.start();
 
   //******************************************************************
   //Dynamic setup
@@ -108,36 +211,32 @@ void loop() {
   //******************************************************************
   //Dynamic Loop
   if (!gameOver) {
+    movementPossible = false;
     if (!checkCollision(movingPiece)) { moveDown(movingPiece); }
-    if (!checkCollision(movingPiece)) { movePiece(); }
 
     if (checkCollision(movingPiece)) {
       moveUp(movingPiece);
       addToField(movingPiece);
       getNewPiece(movingPiece);
-    }
+    }    
+    turnPiece();
+    movementPossible = true;
 
     showField();
-    showPiece(movingPiece);
 
     //******************************************************************
     //Static Loop
-    while (checkRowIsFull(staticField))
-      ;
-    if (gameIsOver(staticField)) { gameOver = true; }
+    while (checkRowIsFull(staticField));
+    gameOver = gameIsOver(staticField);
 
     //delay
-    lastMillis2 = millis();
-    while (true) {
-      if ((lastMillis2 + 100) < millis()) {
-        break;
-      } else {
-        checkInputs();
-      }
-    }
+    delay(speed);
+
   }
+  else{random(7);}    //So it doesn't always repeat
+  
   //reset
-  if (digitalRead(ButtonTurnLeft) && digitalRead(ButtonMoveRight)) {
+  if (!digitalRead(ButtonTurnLeft) && !digitalRead(ButtonMoveRight)) {
     if (ton(true, lastMillis, 1000)) {
       gameOver = false;
       clearField();
@@ -152,45 +251,29 @@ void loop() {
 //******************************************************************
 //Hardware Methods
 void showField() {
-  int addr = 0;
-  int k = 0;
 
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 16; j++) {
-      if (j > 7) {
-        k = j - 8;
-        addr = 1;
-      } else {
-        k = j;
-        addr = 0;
+  for(int address = 0; address <= 1; address++){
+    
+    for(int row = 0; row < 8; row++){
+      byte value = 0;
+      for(int col = 0; col < 8; col++){
+        bool movingPieceHere = false;
+        for(int i=0; i<4; i++){
+          if(movingPiece[i].x == col && movingPiece[i].y == row+(address*8))
+          {
+            movingPieceHere = true;
+            break;
+          }
+        }
+
+        if(staticField[col][row+(address*8)] || movingPieceHere){
+          value += 1 << 7-col;
+        }       
       }
-      lc.setLed(addr, k, i, staticField[i][j]);
+
+      lc.setRow(address, row, value);     
     }
   }
-}
-
-void showPiece(Coordinates *movingPiece) {
-  int addr = 0;
-  int k = 0;
-
-  for (int i = 0; i < 4; i++) {
-    if (movingPiece[i].y > 7) {
-      k = movingPiece[i].y - 8;
-      addr = 1;
-    } else {
-      k = movingPiece[i].y;
-      addr = 0;
-    }
-    lc.setLed(addr, k, movingPiece[i].x, true);
-  }
-}
-
-void checkInputs() {
-  if (digitalRead(ButtonTurnLeft)) { ButtonTurnLeftPressed = true; }
-  if (digitalRead(ButtonTurnRight)) { ButtonTurnRightPressed = true; }
-  if (digitalRead(ButtonMoveLeft)) { ButtonMoveLeftPressed = true; }
-  if (digitalRead(ButtonMoveRight)) { ButtonMoveRightPressed = true; }
-  if (digitalRead(ButtonMoveDown)) { ButtonMoveDownPressed = true; }
 }
 
 //******************************************************************
@@ -409,13 +492,10 @@ void turnRight(bool staticField[8][16], Coordinates *piece) {
   }
 }
 
-void movePiece() {
+void turnPiece() {
   if (ButtonTurnLeftPressed) { turnLeft(staticField, movingPiece); }
   if (ButtonTurnRightPressed) { turnRight(staticField, movingPiece); }
-  if (ButtonMoveRightPressed) { moveRight(movingPiece); }
-  if (ButtonMoveLeftPressed) { moveLeft(movingPiece); }
-  if (ButtonMoveDownPressed) { moveDown(movingPiece); }
-  ButtonTurnLeftPressed = ButtonTurnRightPressed = ButtonMoveLeftPressed = ButtonMoveRightPressed = ButtonMoveDownPressed = false;
+  ButtonTurnLeftPressed = ButtonTurnRightPressed = false;
 }
 
 //******************************************************************
@@ -494,3 +574,85 @@ bool ton(bool start, unsigned long lastMillis, unsigned long delay) {
   if (start && (millis() - lastMillis) >= delay) { return true; }
   return false;
 }
+
+//******************************************************************
+//Interrupt loop
+unsigned long prevMillisSound = 0;
+unsigned long prevMillisMove = 0;
+int thisNote = 0;
+void interruptLoop(){
+  unsigned long actMillis = millis();
+
+  if(prevMillisMove + moveTimeout < actMillis)
+  {
+    prevMillisMove = actMillis;
+    if(ButtonMoveLeftPressed && movementPossible) { moveLeft(movingPiece); showField();}
+    if(ButtonMoveRightPressed && movementPossible) { moveRight(movingPiece); showField();}
+    
+    if(ButtonMoveDownPressed && movementPossible) {
+       moveDown(movingPiece);
+       if (checkCollision(movingPiece)) {moveUp(movingPiece);} else {showField();}
+    }
+  }
+
+
+  //********************************
+  //Sound
+  int noteDuration = 1000/noteDurations[thisNote];
+  if(soundOn){
+    tone(9, melody[thisNote],noteDuration);
+  }
+
+  int pauseBetweenNotes = noteDuration * 1.30;
+  
+  if(prevMillisSound + pauseBetweenNotes > actMillis){
+    return;
+  }
+  else{    
+    prevMillisSound = actMillis;
+    noTone(9); //stop the tone playing:
+    thisNote++;
+    if(thisNote >= sizeof(melody) / sizeof(melody[0])){
+      thisNote = 0;
+    }
+  }
+}
+
+//******************************************************************
+//Button interrupts
+void turnLeftPressed(){
+  if(turnLeftCooldown + cooldownTime > millis()){return;}  
+  turnLeftCooldown = millis();
+  if(movementPossible){
+    turnLeft(staticField, movingPiece);
+    showField();
+  }
+  else{
+    ButtonTurnLeftPressed = true;
+  }
+}
+
+void turnRightPressed(){
+  if(turnRightCooldown + cooldownTime > millis()){return;}  
+  turnRightCooldown = millis();
+  if(movementPossible){
+    turnRight(staticField, movingPiece);
+    showField();
+  }
+  else{
+    ButtonTurnRightPressed = true;
+  }
+}
+
+void moveLeftPressed(){
+  ButtonMoveLeftPressed = !digitalRead(ButtonMoveLeft);
+}
+
+void moveRightPressed(){
+  ButtonMoveRightPressed = !digitalRead(ButtonMoveRight);
+}
+
+void moveDownPressed(){
+  ButtonMoveDownPressed = !digitalRead(ButtonMoveDown);
+}
+
