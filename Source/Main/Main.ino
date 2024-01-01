@@ -97,6 +97,104 @@ const int ButtonMoveDown = 21;
 //Buzzerpin
 const int BuzzerPin = 9;
 
+/*
+1 (Vss) -> GND
+2 (Vdd) -> 5V
+3 (V0) -> Pin 8
+4 (RS) -> Pin 40
+5 (RW) -> GND
+6 (E) -> Pin 41
+7
+8
+9
+10
+11 (D4) -> Pin 42
+12 (D5) -> Pin 43
+13 (D6) -> Pin 44
+14 (D7) -> Pin 45
+15 (A) -> 5V
+16 (K) -> GND
+*/
+LiquidCrystal lcd(40, 41, 42, 43, 44, 45);
+int Contrast=75;
+
+byte lcdRightLPiece[8] = {
+	0b00000,
+	0b01100,
+	0b01100,
+	0b01100,
+	0b01100,
+	0b01111,
+	0b01111,
+	0b00000
+};
+
+byte lcdLeftLPiece[8] = {
+	0b00000,
+	0b00110,
+	0b00110,
+	0b00110,
+	0b00110,
+	0b11110,
+	0b11110,
+	0b00000
+};
+
+byte lcdLongPiece[8] = {
+	0b00110,
+	0b00110,
+	0b00110,
+	0b00110,
+	0b00110,
+	0b00110,
+	0b00110,
+	0b00110
+};
+
+byte lcdSquarePiece[8] = {
+	0b00000,
+	0b00000,
+	0b01111,
+	0b01111,
+	0b01111,
+	0b01111,
+	0b00000,
+	0b00000
+};
+
+byte lcdTPiece[8] = {
+	0b00000,
+	0b00000,
+	0b11110,
+	0b11110,
+	0b01100,
+	0b01100,
+	0b00000,
+	0b00000
+};
+
+byte lcdLeftZPiece[8] = {
+	0b00000,
+	0b00000,
+	0b11100,
+	0b11100,
+	0b00111,
+	0b00111,
+	0b00000,
+	0b00000
+};
+
+byte lcdRightZPiece[8] = {
+	0b00000,
+	0b00000,
+	0b00111,
+	0b00111,
+	0b11100,
+	0b11100,
+	0b00000,
+	0b00000
+};
+
 //******************************************************************
 //Dynamic variables
 struct Coordinates {
@@ -116,7 +214,7 @@ unsigned long moveLeftCooldown = 0;
 unsigned long moveRightCooldown = 0;
 unsigned long moveDownCooldown = 0;
 
-const int cooldownTime = 50;    //Cooldowntime of turnbuttons
+const int cooldownTime = 120;   //Cooldowntime of turnbuttons
 const int moveTimeout = 100;    //Timeout for sideways movement
 
 enum Shapes {
@@ -131,6 +229,7 @@ enum Shapes {
 
 Coordinates movingPiece[4];
 Shapes movingShape;
+Shapes nextShape;
 
 //Pieces
 Coordinates RightLPiece[4] = { 3, -3, 3, -2, 3, -1, 4, -1 };
@@ -153,9 +252,15 @@ unsigned long lastMillis;
 // create playfield (addr, row, col)
 bool staticField[8][16] = { {} };
 
+//******************************************************************
 //Game variables
 int speed = 150;
+int level = 1;
+int score = 0;
+int highscore;
+int linesCleared = 0;
 
+int pointsForRows[4] = {40, 100, 300, 1200};
 
 void setup() {
   //******************************************************************
@@ -168,6 +273,20 @@ void setup() {
   // Clear the display
   lc.clearDisplay(0);
   lc.clearDisplay(1);
+
+  //LCD
+  pinMode(8, OUTPUT);
+  analogWrite(8,Contrast);
+  lcd.begin(16, 2);
+
+  lcd.createChar(eLeftLPiece, lcdLeftLPiece);
+  lcd.createChar(eRightLPiece, lcdRightLPiece);
+  lcd.createChar(eLongPiece, lcdLongPiece);
+  lcd.createChar(eSquarePiece, lcdSquarePiece);
+  lcd.createChar(eTPiece, lcdTPiece);
+  lcd.createChar(eLeftZPiece, lcdLeftZPiece);
+  lcd.createChar(eRightZPiece, lcdRightZPiece);
+
 
   //Buttons
   pinMode(ButtonTurnLeft, INPUT_PULLUP);
@@ -195,7 +314,7 @@ void setup() {
   Serial.begin(9600);
 
   randomSeed(analogRead(A7));
-  getNewPiece(movingPiece);
+  getNewPiece(movingPiece, &nextShape);
 
   Serial.println("newStart**************************");
 
@@ -217,17 +336,19 @@ void loop() {
     if (checkCollision(movingPiece)) {
       moveUp(movingPiece);
       addToField(movingPiece);
-      getNewPiece(movingPiece);
+      checkRowIsFull(staticField);
+      getNewPiece(movingPiece, &nextShape);
     }    
     turnPiece();
     movementPossible = true;
 
     showField();
+    
 
     //******************************************************************
     //Static Loop
-    while (checkRowIsFull(staticField));
-    gameOver = gameIsOver(staticField);
+    //while (checkRowIsFull(staticField));
+    if(gameIsOver(staticField)){setGameOver();}
 
     //delay
     delay(speed);
@@ -238,14 +359,41 @@ void loop() {
   //reset
   if (!digitalRead(ButtonTurnLeft) && !digitalRead(ButtonMoveRight)) {
     if (ton(true, lastMillis, 1000)) {
+      if(score > highscore){highscore = score;}
+      speed = 150;
+      level = 1;
+      score = 0;
+      linesCleared = 0;
+      lcd.clear();
       gameOver = false;
       clearField();
-      getNewPiece(movingPiece);
+      getNewPiece(movingPiece, &nextShape);
       lastMillis = millis();
     }
   } else {
     lastMillis = millis();
   }
+}
+
+//******************************************************************
+//Game Methods
+void setGameOver(){
+ gameOver = true;
+ Serial.print("Highscore: ");
+ Serial.print(highscore);
+ Serial.print("   |   score: ");
+ Serial.println(score);
+}
+
+void addScore(int numOfRows){
+  score += level*pointsForRows[numOfRows-1];
+  linesCleared += numOfRows;
+  if(linesCleared >= 10 && level < 100){
+    speed -= 10;
+    linesCleared %= 10;
+    level++;
+  }
+  updateLCD();
 }
 
 //******************************************************************
@@ -276,14 +424,39 @@ void showField() {
   }
 }
 
+//Display
+void updateLCD(){
+  //Score
+  lcd.setCursor(0, 0);
+  lcd.print("Sc:");
+  lcd.print(score);
+
+  //Level
+  lcd.setCursor(10, 0);
+  lcd.print("Lvl:");
+  lcd.print(level);
+
+  //Highscore
+  lcd.setCursor(0, 1);
+  lcd.print("Hs:");
+  lcd.print(highscore);
+
+  //Next Piece
+  lcd.setCursor(10, 1);
+  lcd.print("Next:");
+  lcd.write((byte)nextShape);
+}
+
 //******************************************************************
 //Dynamic Methods
 
 //*********************
 //Get new Piece
-void getNewPiece(Coordinates *piece) {
+void getNewPiece(Coordinates *piece, Shapes *nextShape) {
   Coordinates *tempPointer;
-  movingShape = random(7);
+  movingShape = *nextShape;
+  *nextShape = random(7);
+  updateLCD();
 
   switch (movingShape) {
     case 0: tempPointer = RightLPiece; break;
@@ -327,7 +500,7 @@ void moveLeft(Coordinates *piece) {
       freeToMove = false;
     }
 
-    if (freeToMove) {
+    if (freeToMove && piece[i].y >= 0) {
       if (staticField[piece[i].x - 1][piece[i].y]) {
         freeToMove = false;
       }
@@ -352,7 +525,7 @@ void moveRight(Coordinates *piece) {
       freeToMove = false;
     }
 
-    if (freeToMove) {
+    if (freeToMove && piece[i].y >= 0) {
       if (staticField[piece[i].x + 1][piece[i].y]) {
         freeToMove = false;
       }
@@ -517,30 +690,30 @@ bool checkCollision(Coordinates *movingPiece) {
 
 void addToField(Coordinates *movingPiece) {
   for (int i = 0; i < 4; i++) {
-    staticField[movingPiece[i].x][movingPiece[i].y] = true;
+    if(movingPiece[i].y >= 0){staticField[movingPiece[i].x][movingPiece[i].y] = true;}    
   }
 }
 
 bool checkRowIsFull(bool field[8][16]) {
-  bool lastRowWasFull = false;
-  int countRowInOrder = 1;
-  for (int r = 15; r >= 0; r--) {
-    bool rowIsFull = true;
-    for (int c = 0; c < 8; c++) {
-      if (field[c][r] == false) {
-        rowIsFull = false;
-        lastRowWasFull = false;
-        break;
-      }
+  int streak = 0;
+  int y = 16;
+  while(y >= 0){
+    y--;
+    bool rowFull = true;
+    for (int x = 0; x < 8; x++) {
+      if(!field[x][y]){rowFull = false;break;}
     }
-    if (rowIsFull) {
-      moveRows(r);
-      if (lastRowWasFull) { countRowInOrder++; }
-      lastRowWasFull = true;
-      return true;
+
+    if(rowFull){
+      moveRows(y);
+      y++; //so it continues on same line
+      streak++;
+    }
+    else if(streak > 0){
+      addScore(streak);
+      streak = 0;
     }
   }
-  return false;
 }
 
 void moveRows(int rowToDelete) {
@@ -598,12 +771,13 @@ void interruptLoop(){
 
   //********************************
   //Sound
+  if(gameOver){thisNote=0;return;}
   int noteDuration = 1000/noteDurations[thisNote];
   if(soundOn){
     tone(9, melody[thisNote],noteDuration);
   }
 
-  int pauseBetweenNotes = noteDuration * 1.30;
+  int pauseBetweenNotes = noteDuration * float(speed)/100; //1.30;
   
   if(prevMillisSound + pauseBetweenNotes > actMillis){
     return;
