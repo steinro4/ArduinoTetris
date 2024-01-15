@@ -324,11 +324,7 @@ void setup() {
 
 
 void loop() {
-  //******************************************************************
-  //Hardware Loop
 
-  //******************************************************************
-  //Dynamic Loop
   if (!gameOver) {
     movementPossible = false;
     if (!checkCollision(movingPiece)) { moveDown(movingPiece); }
@@ -344,10 +340,6 @@ void loop() {
 
     showField();
     
-
-    //******************************************************************
-    //Static Loop
-    //while (checkRowIsFull(staticField));
     if(gameIsOver(staticField)){setGameOver();}
 
     //delay
@@ -376,32 +368,9 @@ void loop() {
 }
 
 //******************************************************************
-//Game Methods
-void setGameOver(){
- gameOver = true;
- Serial.print("Highscore: ");
- Serial.print(highscore);
- Serial.print("   |   score: ");
- Serial.println(score);
-}
-
-void addScore(int numOfRows){
-  score += level*pointsForRows[numOfRows-1];
-  linesCleared += numOfRows;
-  if(linesCleared >= 10 && level < 100){
-    speed -= 10;
-    linesCleared %= 10;
-    level++;
-  }
-  updateLCD();
-}
-
-//******************************************************************
 //Hardware Methods
 void showField() {
-
   for(int address = 0; address <= 1; address++){
-    
     for(int row = 0; row < 8; row++){
       byte value = 0;
       for(int col = 0; col < 8; col++){
@@ -674,7 +643,6 @@ void turnPiece() {
 //******************************************************************
 //Static Methods
 bool checkCollision(Coordinates *movingPiece) {
-
   for (int i = 0; i < 4; i++) {
     if (movingPiece[i].y >= 0) {
       if (movingPiece[i].y >= 16) {
@@ -716,6 +684,7 @@ bool checkRowIsFull(bool field[8][16]) {
   }
 }
 
+//delete full row and move rows above down
 void moveRows(int rowToDelete) {
   for (int r = rowToDelete; r > 0; r--) {
     for (int c = 0; c < 8; c++) {
@@ -727,6 +696,7 @@ void moveRows(int rowToDelete) {
   }
 }
 
+//game is over as soon as an element of first row of static field is true
 bool gameIsOver(bool field[8][16]) {
   for (int c = 0; c < 8; c++) {
     if (field[c][0]) { return true; }
@@ -740,6 +710,25 @@ void clearField() {
       staticField[c][r] = false;
     }
   }
+}
+
+void setGameOver(){
+ gameOver = true;
+ Serial.print("Highscore: ");
+ Serial.print(highscore);
+ Serial.print("   |   score: ");
+ Serial.println(score);
+}
+
+void addScore(int numOfRows){
+  score += level*pointsForRows[numOfRows-1];
+  linesCleared += numOfRows;
+  if(linesCleared >= 10 && level < 100){
+    speed -= 10;
+    linesCleared %= 10;
+    level++;
+  }
+  updateLCD();
 }
 
 //start delay
