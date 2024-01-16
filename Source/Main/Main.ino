@@ -724,9 +724,11 @@ void addScore(int numOfRows){
   score += level*pointsForRows[numOfRows-1];
   linesCleared += numOfRows;
   if(linesCleared >= 10 && level < 100){
-    speed -= 10;
     linesCleared %= 10;
-    level++;
+    if(speed >= 10){
+      speed -= 10;
+      level++;
+    }    
   }
   updateLCD();
 }
